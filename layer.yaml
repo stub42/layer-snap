@@ -1,0 +1,5 @@
+repo: https://git.launchpad.net/layer-snap
+defines:
+  type: object
+  default: {}
+  description: Snaps to be installed during bootstrap and kept updated.
