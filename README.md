@@ -11,39 +11,39 @@ in environments with limited network access.
 To have the Snap layer install snaps automatically, declare the snaps in
 layer.yaml:
 
-    ```yaml
-    includes:
-      - layer:basic
-      - layer:snap
-    options:
-      snap:
-        telegraf:
-          channel: stable
-          devmode: false
-          jailmode: false
-          force_dangerous: false
-          revision: null
-    ```
+```yaml
+includes:
+    - layer:basic
+    - layer:snap
+options:
+    snap:
+    telegraf:
+        channel: stable
+        devmode: false
+        jailmode: false
+        force_dangerous: false
+        revision: null
+```
 
 In addition, you should declare Juju resource slots for the snaps. This
 allows operators to have snaps distributed from their Juju controller
 node rather than the snap store, and is necessary for when your charm
 is deployed in network restricted environments.
 
-    ```yaml
-    resources:
-      telegraf:
-        type: file
-        filename: telegraf.snap
-        description: Telegraf snap
-    ```
+```yaml
+resources:
+    telegraf:
+    type: file
+    filename: telegraf.snap
+    description: Telegraf snap
+```
 
 With the Juju resource defined, the operator may deploy your charm
 using locally provided snaps instead of the snap store:
 
-    ```sh
-    juju deploy --resource telegraf=telegraf_0_19.snap cs:telegraf
-    ```
+```sh
+juju deploy --resource telegraf=telegraf_0_19.snap cs:telegraf
+```
 
 If your charm needs to control installation, update and removal of
 snaps itself then do not declare the snaps in layer.yaml. Instead, use
