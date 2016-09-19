@@ -25,10 +25,10 @@ options:
         revision: null
 ```
 
-In addition, you should declare Juju resource slots for the snaps. This
-allows operators to have snaps distributed from their Juju controller
-node rather than the snap store, and is necessary for when your charm
-is deployed in network restricted environments.
+In addition, for Juju 2.0 you should declare Juju resource slots for
+the snaps. This allows operators to have snaps distributed from their
+Juju controller node rather than the Snap Store, and is necessary for
+when your charm is deployed in network restricted environments.
 
 ```yaml
 resources:
@@ -38,8 +38,12 @@ resources:
     description: Telegraf snap
 ```
 
+:no_entry: Charms that need to support Juju 1.25 or earlier cannot
+declare the resource entry in metadata.yaml and can only support snap
+installs and updates from the Snap Store.
+
 With the Juju resource defined, the operator may deploy your charm
-using locally provided snaps instead of the snap store:
+using locally provided snaps instead of the Snap Store:
 
 ```sh
 juju deploy --resource telegraf=telegraf_0_19.snap cs:telegraf
@@ -64,13 +68,13 @@ package::
 
 * `install(snapname, **args)`. Install the snap from the corresponding Juju
   resource (using --force-dangerous implicitly). If the resource is not
-  available, download and install from the Snap store using the provided
+  available, download and install from the Snap Store using the provided
   keyword arguments.
 
 * `refresh(snapname, **args)`. Update the snap. If the snap was installed
   from a local resource then the resource is checked for updates and the
   snap updated if the snap or arguments have changed. If the snap was
-  installed from the Snap store, `snap refresh` is run to update the snap.
+  installed from the Snap Store, `snap refresh` is run to update the snap.
 
 * `remove(snapname)`. The snap is removed.
 

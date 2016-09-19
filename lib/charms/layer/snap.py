@@ -28,11 +28,14 @@ def install(snapname, **kw):
 
     Sets the snap.installed.{snapname} state.
     '''
-    res_path = hookenv.resource_get(snapname)
-    if res_path is False:
-        _install_store(snapname, **kw)
+    if hookenv.has_juju_version('2.0'):
+        res_path = hookenv.resource_get(snapname)
+        if res_path is False:
+            _install_store(snapname, **kw)
+        else:
+            _install_local(res_path, **kw)
     else:
-        _install_local(res_path, **kw)
+        _install_store(snapname, **kw)
     reactive.set_state('snap.installed.{}'.format(snapname))
 
 
@@ -47,11 +50,14 @@ def refresh(snapname, **kw):
     # This means we don't need to cope with an operator switching
     # from a resource provided to a store provided snap, because there
     # is no way for them to do that.
-    res_path = hookenv.resource_get(snapname)
-    if res_path is False:
-        _refresh_store(snapname, *kw)
+    if hookenv.has_juju_version('2.0'):
+        res_path = hookenv.resource_get(snapname)
+        if res_path is False:
+            _refresh_store(snapname, **kw)
+        else:
+            _install_local(res_path, **kw)
     else:
-        _install_local(res_path, **kw)
+        _refresh_store(snapname, **kw)
 
 
 def remove(snapname):
