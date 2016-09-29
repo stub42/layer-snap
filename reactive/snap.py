@@ -16,30 +16,71 @@
 '''
 charms.reactive helpers for dealing with Snap packages.
 '''
-from charmhelpers.core import hookenv
+import os.path
+import subprocess
+from textwrap import dedent
+
+from charmhelpers.core import hookenv, host
 from charms import layer
 from charms import reactive
 from charms.layer import snap
 from charms.reactive import hook
+from charms.reactive.helpers import data_changed
 
 
 def install():
     opts = layer.options('snap')
     for snapname, snap_opts in opts.items():
-        state = 'snap.installed.{}'.format(snapname)
-        if not reactive.is_state(state):
-            snap.install(snapname, **snap_opts)
+        snap.install(snapname, **snap_opts)
+    if data_changed('snap.install.opts', opts):
+        snap.connect_all()
 
 
 def refresh():
     opts = layer.options('snap')
     for snapname, snap_opts in opts.items():
         snap.refresh(snapname, **snap_opts)
+    snap.connect_all()
 
 
 @hook('upgrade-charm')
 def upgrade_charm():
     refresh()
+
+
+def update_snap_proxy():
+    # This is a hack based on
+    # https://bugs.launchpad.net/layer-snap/+bug/1533899/comments/1
+    # Do it properly when Bug #1533899 is addressed.
+    # Note we can't do this in a standard reactive handler as we need
+    # to ensure proxies are configured before attempting installs or
+    # updates.
+    proxy = hookenv.config()['snap_proxy']
+    if not data_changed('snap.proxy', proxy):
+        return
+    path = '/etc/systemd/system/snapd.service.d/snap_layer_proxy.conf'
+    if proxy:
+        create_snap_proxy_conf(path, proxy)
+    else:
+        remove_snap_proxy_conf(path)
+    subprocess.check_call(['systemctl', 'daemon-reload'],
+                          universal_newlines=True)
+
+
+def create_snap_proxy_conf(path, proxy):
+    host.mkdir(os.path.dirname(path))
+    content = dedent('''\
+                        # Managed by Juju
+                        [Service]
+                        Environment=http_proxy={}
+                        Environment=https_proxy={}
+                        ''').format(proxy, proxy)
+    host.write_file(path, content.encode())
+
+
+def remove_snap_proxy_conf(path):
+    if os.path.exists(path):
+        os.remove(path)
 
 
 # Per https://github.com/juju-solutions/charms.reactive/issues/33,
@@ -54,5 +95,6 @@ if not hasattr(reactive, '_snap_registered'):
     # to running hooks well before the config-changed hook has been invoked
     # and the intialization provided an opertunity to be run.
     hookenv.atstart(hookenv.log, 'Initializing Snap Layer')
+    hookenv.atstart(update_snap_proxy)
     hookenv.atstart(install)
     reactive._snap_registered = True

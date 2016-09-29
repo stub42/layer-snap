@@ -17,7 +17,9 @@
 import subprocess
 
 from charmhelpers.core import hookenv
+from charms import layer
 from charms import reactive
+from charms.reactive.helpers import any_file_changed, data_changed
 
 
 def install(snapname, **kw):
@@ -27,16 +29,25 @@ def install(snapname, **kw):
     otherwise from the Snap Store.
 
     Sets the snap.installed.{snapname} state.
+
+    If the snap.installed.{snapname} state is already set and
+    the snap options have been changed, then the refresh() function
+    is called.
     '''
-    if hookenv.has_juju_version('2.0'):
-        res_path = hookenv.resource_get(snapname)
-        if res_path is False:
-            _install_store(snapname, **kw)
-        else:
-            _install_local(res_path, **kw)
+    installed_state = 'snap.installed.{}'.format(snapname)
+    if reactive.is_state(installed_state):
+        if data_changed('snap.opts.{}'.format(snapname), kw):
+            refresh(snapname, **kw)
     else:
-        _install_store(snapname, **kw)
-    reactive.set_state('snap.installed.{}'.format(snapname))
+        if hookenv.has_juju_version('2.0'):
+            res_path = hookenv.resource_get(snapname)
+            if res_path is False:
+                _install_store(snapname, **kw)
+            else:
+                _install_local(res_path, **kw)
+        else:
+            _install_store(snapname, **kw)
+        reactive.set_state(installed_state)
 
 
 def refresh(snapname, **kw):
@@ -44,7 +55,8 @@ def refresh(snapname, **kw):
 
     Snap will be pulled from the coresponding resource if available
     and reinstalled if it has changed. Otherwise a 'snap refresh' is
-    run updating the snap from the Snap Store.
+    run updating the snap from the Snap Store, potentially switching
+    channel and changing confinement options.
     '''
     # Note that once you upload a resource, you can't remove it.
     # This means we don't need to cope with an operator switching
@@ -61,13 +73,37 @@ def refresh(snapname, **kw):
 
 
 def remove(snapname):
+    hookenv.log('Removing snap {}'.format(snapname))
     subprocess.check_call(['snap', 'remove', snapname],
                           universal_newlines=True)
     reactive.remove_state('snap.installed.{}'.format(snapname))
 
 
+def connect(plug, slot):
+    '''Connect or reconnect a snap plug with a slot.
+
+    Each argument must be a two element tuple, corresponding to
+    the two arguments to the 'snap connect' command.
+    '''
+    hookenv.log('Connecting {} to {}'.format(plug, slot), hookenv.DEBUG)
+    subprocess.check_call(['snap', 'connect', plug, slot],
+                          universal_newlines=True)
+
+
+def connect_all():
+    '''Connect or reconnect all interface connections defined in layer.yaml.
+
+    This method will fail if called before all referenced snaps have been
+    installed.
+    '''
+    opts = layer.options('snap')
+    for snapname, snap_opts in opts.items():
+        for plug, slot in snap_opts.get('connect', []):
+            connect(plug, slot)
+
+
 def _snap_args(channel='stable', devmode=False, jailmode=False,
-               force_dangerous=False, revision=None):
+               force_dangerous=False, revision=None, connect=None):
     if channel != 'stable':
         yield '--channel={}'.format(channel)
     if devmode is True:
@@ -82,8 +118,7 @@ def _snap_args(channel='stable', devmode=False, jailmode=False,
 
 def _install_local(path, **kw):
     key = 'snap.local.{}'.format(path)
-    if (reactive.helpers.data_changed(key, kw) or
-            reactive.helpers.any_file_changed([path])):
+    if (data_changed(key, kw) or any_file_changed([path])):
         cmd = ['snap', 'install']
         cmd.extend(_snap_args(**kw))
         cmd.append('--force-dangerous')  # TODO: required for local snaps?
@@ -105,4 +140,15 @@ def _refresh_store(snapname, **kw):
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Refreshing {} from store'.format(snapname))
-    subprocess.check_call(cmd, universal_newlines=True)
+    # Per https://bugs.launchpad.net/layer-snap/+bug/1588322 we don't get
+    # a useful error code out of 'snap refresh'. We are forced to parse
+    # the output to see if it is a non-fatal error.
+    # subprocess.check_call(cmd, universal_newlines=True)
+    try:
+        out = subprocess.check_output(cmd, universal_newlines=True,
+                                      stderr=subprocess.STDOUT)
+        print(out)
+    except subprocess.CalledProcessError as x:
+        print(x.output)
+        if "has no updates available" not in x.output:
+            raise

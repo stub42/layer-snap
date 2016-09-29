@@ -13,16 +13,19 @@ layer.yaml:
 
 ```yaml
 includes:
-    - layer:basic
-    - layer:snap
+  - layer:basic
+  - layer:snap
 options:
-    snap:
+  snap:
     telegraf:
-        channel: stable
-        devmode: false
-        jailmode: false
-        force_dangerous: false
-        revision: null
+      channel: stable
+      devmode: false
+      jailmode: false
+      force_dangerous: false
+      revision: null
+      connect:
+        - ["telegraf:system-observe", "ubuntu-core:system-observe"]
+        - ["telegraf:log-observe", "ubuntu-core:log-observe"]
 ```
 
 In addition, for Juju 2.0 you should declare Juju resource slots for
@@ -52,7 +55,31 @@ juju deploy --resource telegraf=telegraf_0_19.snap cs:telegraf
 If your charm needs to control installation, update and removal of
 snaps itself then do not declare the snaps in layer.yaml. Instead, use
 the API provided by the `charms.layer.snap` Python package.
-            
+
+### Details
+
+In the example layer.yaml above, each snap to install is declared as an
+entry in the snap layer options mapping. Each of these entries is
+itself a mapping, with a number of optional keys. Most of the keys
+correspond to `snap install` command line options.
+
+* channel (str) - The channel to use instead of `stable`. Defaults to `stable`.
+                  Ignored if the snap is being installed from a Juju resource.
+* devmode (bool) - Install with non-enforcing security.
+* jailmode (bool) - Override a snap's request for non-enforcing security
+* revision (str) - Install the given revision of a snap. Has no effect
+                   if the snap is being installed from a Juju resource.
+* force_dangerous (bool) - Install the snap even if it is unverified and could
+                           be dangerous. Implicitly set if the snap is being
+                           installed from a Juju resource.
+
+The other key is `connect`, which declares the `snap connect` commands
+to run to connect the snap's plugs to suitable slots. Each entry is a
+two element list, with the first item being the plug name and the second
+the target snap and slot name. The connections are made after all snaps
+have been installed, so you do not need to worry about installation
+order.
+
 
 ## Usage
 
