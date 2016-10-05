@@ -103,15 +103,16 @@ def connect_all():
 
 
 def _snap_args(channel='stable', devmode=False, jailmode=False,
-               force_dangerous=False, revision=None, connect=None):
+               dangerous=False, force_dangerous=False, revision=None,
+               connect=None):
     if channel != 'stable':
         yield '--channel={}'.format(channel)
     if devmode is True:
         yield '--devmode'
     if jailmode is True:
         yield '--jailmode'
-    if force_dangerous is True:
-        yield '--force-dangerous'
+    if force_dangerous is True or dangerous is True:
+        yield '--dangerous'
     if revision is not None:
         yield '--revision={}'.format(revision)
 
@@ -121,7 +122,7 @@ def _install_local(path, **kw):
     if (data_changed(key, kw) or any_file_changed([path])):
         cmd = ['snap', 'install']
         cmd.extend(_snap_args(**kw))
-        cmd.append('--force-dangerous')  # TODO: required for local snaps?
+        cmd.append('--dangerous')  # TODO: required for local snaps?
         cmd.append(path)
         hookenv.log('Installing {} from local resource'.format(path))
         subprocess.check_call(cmd, universal_newlines=True)

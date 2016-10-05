@@ -21,7 +21,7 @@ options:
       channel: stable
       devmode: false
       jailmode: false
-      force_dangerous: false
+      dangerous: false
       revision: null
       connect:
         - ["telegraf:system-observe", "ubuntu-core:system-observe"]
@@ -69,9 +69,9 @@ correspond to `snap install` command line options.
 * jailmode (bool) - Override a snap's request for non-enforcing security
 * revision (str) - Install the given revision of a snap. Has no effect
                    if the snap is being installed from a Juju resource.
-* force_dangerous (bool) - Install the snap even if it is unverified and could
-                           be dangerous. Implicitly set if the snap is being
-                           installed from a Juju resource.
+* dangerous (bool) - Install the snap even if it is unverified and could
+                     be dangerous. Implicitly set if the snap is being
+                     installed from a Juju resource.
 
 The other key is `connect`, which declares the `snap connect` commands
 to run to connect the snap's plugs to suitable slots. Each entry is a
@@ -94,7 +94,7 @@ itself, the following methods are available via the `charms.layer.snap`
 package::
 
 * `install(snapname, **args)`. Install the snap from the corresponding Juju
-  resource (using --force-dangerous implicitly). If the resource is not
+  resource (using --dangerous implicitly). If the resource is not
   available, download and install from the Snap Store using the provided
   keyword arguments.
 
@@ -112,7 +112,7 @@ what these options do:
 * `channel` (str)
 * `devmode` (boolean)
 * `jailmode` (boolean)
-* `force_dangerous` (boolean)
+* `dangerous` (boolean)
 * `revision` (str)
 
 
