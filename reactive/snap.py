@@ -19,6 +19,7 @@ charms.reactive helpers for dealing with Snap packages.
 import os.path
 import subprocess
 from textwrap import dedent
+import time
 
 from charmhelpers.core import hookenv, host
 from charms import layer
@@ -64,6 +65,9 @@ def update_snap_proxy():
     else:
         remove_snap_proxy_conf(path)
     subprocess.check_call(['systemctl', 'daemon-reload'],
+                          universal_newlines=True)
+    time.sleep(2)
+    subprocess.check_call(['systemctl', 'restart', 'snapd.service'],
                           universal_newlines=True)
 
 
