@@ -17,6 +17,7 @@
 charms.reactive helpers for dealing with Snap packages.
 '''
 import os.path
+import shutil
 import subprocess
 from textwrap import dedent
 import time
@@ -47,6 +48,15 @@ def refresh():
 @hook('upgrade-charm')
 def upgrade_charm():
     refresh()
+
+
+def ensure_snapd():
+    if shutil.which('snap'):
+        return
+    # I don't use the apt layer, because that would tie this layer
+    # too closely to apt packaging. Perhaps this is a snap-only system.
+    cmd = ['apt', 'install', 'snapd']
+    subprocess.check_call(cmd, universal_newlines=True)
 
 
 def update_snap_proxy():
@@ -99,6 +109,7 @@ if not hasattr(reactive, '_snap_registered'):
     # to running hooks well before the config-changed hook has been invoked
     # and the intialization provided an opertunity to be run.
     hookenv.atstart(hookenv.log, 'Initializing Snap Layer')
+    hookenv.atstart(ensure_snapd)
     hookenv.atstart(update_snap_proxy)
     hookenv.atstart(install)
     reactive._snap_registered = True
