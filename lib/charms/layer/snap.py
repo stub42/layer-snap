@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import subprocess
 
 from charmhelpers.core import hookenv
@@ -40,7 +41,7 @@ def install(snapname, **kw):
             refresh(snapname, **kw)
     else:
         if hookenv.has_juju_version('2.0'):
-            res_path = hookenv.resource_get(snapname)
+            res_path = _resource_get(snapname)
             if res_path is False:
                 _install_store(snapname, **kw)
             else:
@@ -63,7 +64,7 @@ def refresh(snapname, **kw):
     # from a resource provided to a store provided snap, because there
     # is no way for them to do that.
     if hookenv.has_juju_version('2.0'):
-        res_path = hookenv.resource_get(snapname)
+        res_path = _resource_get(snapname)
         if res_path is False:
             _refresh_store(snapname, **kw)
         else:
@@ -153,3 +154,13 @@ def _refresh_store(snapname, **kw):
         print(x.output)
         if "has no updates available" not in x.output:
             raise
+
+
+def _resource_get(snapname):
+    '''Used to fetch the resource path of the given name.
+
+    This wrapper obtains a resource path and adds an additional
+    check to return False if the resource is zero length.
+    '''
+    res_path = hookenv.resource_get(snapname)
+    return res_path and os.stat(res_path).st_size != 0
