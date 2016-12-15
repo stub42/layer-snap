@@ -22,7 +22,6 @@ options:
       devmode: false
       jailmode: false
       dangerous: false
-      revision: null
       connect:
         - ["telegraf:system-observe", "ubuntu-core:system-observe"]
         - ["telegraf:log-observe", "ubuntu-core:log-observe"]
@@ -86,8 +85,6 @@ correspond to `snap install` command line options.
                   Ignored if the snap is being installed from a Juju resource.
 * devmode (bool) - Install with non-enforcing security.
 * jailmode (bool) - Override a snap's request for non-enforcing security
-* revision (str) - Install the given revision of a snap. Has no effect
-                   if the snap is being installed from a Juju resource.
 * dangerous (bool) - Install the snap even if it is unverified and could
                      be dangerous. Implicitly set if the snap is being
                      installed from a Juju resource.
