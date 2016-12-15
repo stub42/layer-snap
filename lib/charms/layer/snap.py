@@ -120,7 +120,7 @@ def _install_local(path, **kw):
     if (data_changed(key, kw) or any_file_changed([path])):
         cmd = ['snap', 'install']
         cmd.extend(_snap_args(**kw))
-        cmd.append('--dangerous')  # TODO: required for local snaps?
+        cmd.append('--dangerous')
         cmd.append(path)
         hookenv.log('Installing {} from local resource'.format(path))
         subprocess.check_call(cmd, universal_newlines=True)
@@ -131,7 +131,17 @@ def _install_store(snapname, **kw):
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Installing {} from store'.format(snapname))
-    subprocess.check_call(cmd, universal_newlines=True)
+    # Per https://bugs.launchpad.net/bugs/1622782, we don't
+    # get a useful error code out of 'snap install', much like
+    # 'snap refresh' below.
+    try:
+        out = subprocess.check_output(cmd, universal_newlines=True,
+                                      stderr=subprocess.STDOUT)
+        print(out)
+    except subprocess.CalledProcessError as x:
+        print(x.output)
+        if "already installed" not in x.output:
+            raise
 
 
 def _refresh_store(snapname, **kw):
