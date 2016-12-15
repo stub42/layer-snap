@@ -56,6 +56,25 @@ If your charm needs to control installation, update and removal of
 snaps itself then do not declare the snaps in layer.yaml. Instead, use
 the API provided by the `charms.layer.snap` Python package.
 
+
+## Charmstore Publication/Release
+
+The [Charm Store](https://jujucharms.com) does not yet understand that
+most resources should be optional and requires them to be uploaded
+before publication. The Snap layer supports the common workaround for
+this, requiring you to upload an empty (0 bytes in size) as a stand in
+for the resource.
+
+```sh
+charm push $JUJU_REPOSITORY/builds/mycharm cs:~me/mycharm
+charm attach cs:~me/mycharm-0 mysnap=empty.snap
+charm release cs:~me/mycharm-1 --channel=beta --resource mysnap-0
+juju deploy cs:~me/mycharm --channel=beta
+```
+
+:watch: This should no longer be required once [:bug: Issue 103](https://github.com/juju/charmstore-client/issues/103 juju/charmstore-client/103) is dealt with.
+
+
 ### Details
 
 In the example layer.yaml above, each snap to install is declared as an
