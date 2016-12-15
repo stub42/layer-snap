@@ -23,8 +23,8 @@ options:
       jailmode: false
       dangerous: false
       connect:
-        - ["telegraf:system-observe", "ubuntu-core:system-observe"]
-        - ["telegraf:log-observe", "ubuntu-core:log-observe"]
+        - ["telegraf:system-observe", ":system-observe"]
+        - ["telegraf:log-observe", ":log-observe"]
 ```
 
 In addition, for Juju 2.0 you should declare Juju resource slots for
