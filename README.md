@@ -9,7 +9,7 @@ in environments with limited network access.
 ## Configuration
 
 To have the Snap layer install snaps automatically, declare the snaps in
-layer.yaml:
+`layer.yaml`:
 
 ```yaml
 includes:
@@ -34,7 +34,7 @@ when your charm is deployed in network restricted environments.
 
 ```yaml
 resources:
-    telegraf:
+  telegraf:
     type: file
     filename: telegraf.snap
     description: Telegraf snap
@@ -52,8 +52,8 @@ juju deploy --resource telegraf=telegraf_0_19.snap cs:telegraf
 ```
 
 If your charm needs to control installation, update and removal of
-snaps itself then do not declare the snaps in layer.yaml. Instead, use
-the API provided by the `charms.layer.snap` Python package.
+snaps itself then do not declare the snaps in `layer.yaml`. Instead,
+use the API provided by the `charms.layer.snap` Python package.
 
 
 ## Charmstore Publication/Release
