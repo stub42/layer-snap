@@ -68,7 +68,8 @@ def update_snap_proxy():
     # updates.
     proxy = hookenv.config()['snap_proxy']
     if not data_changed('snap.proxy', proxy):
-        return
+        return  # Short circuit avoids unnecessary restarts.
+
     path = '/etc/systemd/system/snapd.service.d/snap_layer_proxy.conf'
     if proxy:
         create_snap_proxy_conf(path, proxy)
