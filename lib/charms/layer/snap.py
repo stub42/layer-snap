@@ -170,4 +170,6 @@ def _resource_get(snapname):
     check to return False if the resource is zero length.
     '''
     res_path = hookenv.resource_get(snapname)
-    return res_path and os.stat(res_path).st_size != 0
+    if res_path and os.stat(res_path).st_size != 0:
+        return res_path
+    return False
