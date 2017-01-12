@@ -1,4 +1,4 @@
-# Copyright 2016 Canonical Ltd.
+# Copyright 2016-2017 Canonical Ltd.
 #
 # This file is part of the Snap layer for Juju.
 #
@@ -104,7 +104,8 @@ def connect_all():
 
 
 def _snap_args(channel='stable', devmode=False, jailmode=False,
-               dangerous=False, force_dangerous=False, connect=None):
+               dangerous=False, force_dangerous=False, connect=None,
+               classic=False):
     if channel != 'stable':
         yield '--channel={}'.format(channel)
     if devmode is True:
@@ -113,6 +114,8 @@ def _snap_args(channel='stable', devmode=False, jailmode=False,
         yield '--jailmode'
     if force_dangerous is True or dangerous is True:
         yield '--dangerous'
+    if classic is True:
+        yield '--classic'
 
 
 def _install_local(path, **kw):
