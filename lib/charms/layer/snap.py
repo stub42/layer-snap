@@ -104,13 +104,16 @@ def connect_all():
 
 
 def _snap_args(channel='stable', devmode=False, jailmode=False,
-               dangerous=False, force_dangerous=False, connect=None):
+               dangerous=False, classic=False, force_dangerous=False,
+               connect=None):
     if channel != 'stable':
         yield '--channel={}'.format(channel)
     if devmode is True:
         yield '--devmode'
     if jailmode is True:
         yield '--jailmode'
+    if classic is True:
+        yield '--classic'
     if force_dangerous is True or dangerous is True:
         yield '--dangerous'
 
