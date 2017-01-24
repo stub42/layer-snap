@@ -89,7 +89,7 @@ If you have defined your snaps in layer.yaml for automatic installation
 and updates, there is nothing further to do.
 
 ### API
-  
+ 
 If your charm need to control installation, update and removal of snaps
 itself, the following methods are available via the `charms.layer.snap`
 package::
