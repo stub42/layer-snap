@@ -23,6 +23,7 @@ options:
       devmode: false
       jailmode: false
       dangerous: false
+      classic: false
       connect:
         - ["telegraf:system-observe", ":system-observe"]
         - ["telegraf:log-observe", ":log-observe"]
@@ -68,6 +69,7 @@ correspond to `snap install` command line options.
                   Ignored if the snap is being installed from a Juju resource.
 * devmode (bool) - Install with non-enforcing security.
 * jailmode (bool) - Override a snap's request for non-enforcing security
+* classic (bool) - Install with classic confinement.
 * dangerous (bool) - Install the snap even if it is unverified and could
                      be dangerous. Implicitly set if the snap is being
                      installed from a Juju resource.
@@ -86,7 +88,7 @@ If you have defined your snaps in layer.yaml for automatic installation
 and updates, there is nothing further to do.
 
 ### API
-  
+
 If your charm need to control installation, update and removal of snaps
 itself, the following methods are available via the `charms.layer.snap`
 package::
