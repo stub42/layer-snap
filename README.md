@@ -23,6 +23,7 @@ options:
       devmode: false
       jailmode: false
       dangerous: false
+      classic: false
       connect:
         - ["telegraf:system-observe", ":system-observe"]
         - ["telegraf:log-observe", ":log-observe"]
@@ -66,6 +67,8 @@ correspond to `snap install` command line options.
 
 * channel (str) - The channel to use instead of `stable`. Defaults to `stable`.
                   Ignored if the snap is being installed from a Juju resource.
+* classic (bool) - Acknowledge that the snap uses classic confinement and
+                   will have full system access.
 * devmode (bool) - Install with non-enforcing security.
 * jailmode (bool) - Override a snap's request for non-enforcing security
 * dangerous (bool) - Install the snap even if it is unverified and could
@@ -108,6 +111,7 @@ options. See the snap command line documentation for authorative details on
 what these options do:
 
 * `channel` (str)
+* `classic` (boolean)
 * `devmode` (boolean)
 * `jailmode` (boolean)
 * `dangerous` (boolean)
