@@ -55,7 +55,7 @@ def ensure_snapd():
         return
     # I don't use the apt layer, because that would tie this layer
     # too closely to apt packaging. Perhaps this is a snap-only system.
-    cmd = ['apt', 'install', 'snapd']
+    cmd = ['apt', 'install', '-y', 'snapd']
     subprocess.check_call(cmd, universal_newlines=True)
 
 
