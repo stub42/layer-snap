@@ -1,5 +1,13 @@
+includes:
+  - layer:basic
 repo: https://git.launchpad.net/layer-snap
 defines:
   type: object
   default: {}
   description: Snaps to be installed during bootstrap and kept updated.
+options:
+  # Work around for Bug #1628289. Remove squashfuse package when this is
+  # fixed released in xenial.
+  basic:
+    packages:
+      - squashfuse
