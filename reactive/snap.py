@@ -98,6 +98,12 @@ def remove_snap_proxy_conf(path):
         os.remove(path)
 
 
+def ensure_path():
+    # Per Bug #1662856, /snap/bin may be missing from $PATH. Fix this.
+    if '/snap/bin' not in os.environ['PATH'].split(':'):
+        os.environ['PATH'] += ':/snap/bin'
+
+
 # Per https://github.com/juju-solutions/charms.reactive/issues/33,
 # this module may be imported multiple times so ensure the
 # initialization hook is only registered once. I have to piggy back
@@ -111,6 +117,7 @@ if not hasattr(reactive, '_snap_registered'):
     # and the intialization provided an opertunity to be run.
     hookenv.atstart(hookenv.log, 'Initializing Snap Layer')
     hookenv.atstart(ensure_snapd)
+    hookenv.atstart(ensure_path)
     hookenv.atstart(update_snap_proxy)
     hookenv.atstart(install)
     reactive._snap_registered = True
