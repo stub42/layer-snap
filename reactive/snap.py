@@ -50,13 +50,23 @@ def upgrade_charm():
     refresh()
 
 
+def get_series():
+    return subprocess.check_output(['lsb_release', '-sc'],
+                                   universal_newlines=True).strip()
+
+
 def ensure_snapd():
-    if shutil.which('snap'):
-        return
     # I don't use the apt layer, because that would tie this layer
     # too closely to apt packaging. Perhaps this is a snap-only system.
-    cmd = ['apt', 'install', '-y', 'snapd']
-    subprocess.check_call(cmd, universal_newlines=True)
+    if not shutil.which('snap'):
+        cmd = ['apt', 'install', '-y', 'snapd']
+        subprocess.check_call(cmd, universal_newlines=True)
+    # Work around lp:1628289. Remove this stanza once snapd depends
+    # on the necessary package and snaps work in lxd xenial containers
+    # without the workaround.
+    if get_series() == 'xenial' and not shutil.which('squashfuse'):
+        cmd = ['apt', 'install', '-y', 'squashfuse']
+        subprocess.check_call(cmd, universal_newlines=True)
 
 
 def update_snap_proxy():
