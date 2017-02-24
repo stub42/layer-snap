@@ -105,7 +105,7 @@ def connect_all():
 
 def _snap_args(channel='stable', devmode=False, jailmode=False,
                dangerous=False, force_dangerous=False, connect=None,
-               classic=False):
+               classic=False, revision=None):
     if channel != 'stable':
         yield '--channel={}'.format(channel)
     if devmode is True:
@@ -116,6 +116,8 @@ def _snap_args(channel='stable', devmode=False, jailmode=False,
         yield '--dangerous'
     if classic is True:
         yield '--classic'
+    if revision is not None:
+        yield '--revision={}'.format(revision)
 
 
 def _install_local(path, **kw):
