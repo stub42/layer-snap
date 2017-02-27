@@ -24,6 +24,7 @@ options:
       jailmode: false
       dangerous: false
       classic: false
+      revision: null
       connect:
         - ["telegraf:system-observe", ":system-observe"]
         - ["telegraf:log-observe", ":log-observe"]
@@ -74,6 +75,8 @@ correspond to `snap install` command line options.
 * dangerous (bool) - Install the snap even if it is unverified and could
                      be dangerous. Implicitly set if the snap is being
                      installed from a Juju resource.
+* revision (str) - Install an explicit revision of the snap. Ignored if the
+                   snap is being installed from a Juju resource.
 
 The other key is `connect`, which declares the `snap connect` commands
 to run to connect the snap's plugs to suitable slots. Each entry is a
