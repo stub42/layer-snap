@@ -9,15 +9,13 @@ with open(os.path.join(here, 'README.md')) as f:
     README = f.read()
 
 setup(name='layer_snap',
-      version='0.0.1',
+      version='1.0.0',
       description='layer_snap',
       long_description=README,
       license='Apache License 2.0',
       classifiers=[
-          "Development Status :: 4 - Beta",
+          "Development Status :: 5 - Production/Stable",
           "Intended Audience :: Developers",
-          "Programming Language :: Python :: 2",
-          "Programming Language :: Python :: 2.7",
           "Programming Language :: Python :: 3",
       ],
       url='https://git.launchpad.net/layer-snap',
@@ -25,4 +23,5 @@ setup(name='layer_snap',
       packages=['charms/layer'],
       include_package_data=True,
       zip_safe=False,
+      install_requires=['charmhelpers', 'charms.reactive']
       )
