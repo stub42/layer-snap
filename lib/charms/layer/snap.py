@@ -61,7 +61,10 @@ def refresh(snapname, **kw):
     # Note that once you upload a resource, you can't remove it.
     # This means we don't need to cope with an operator switching
     # from a resource provided to a store provided snap, because there
-    # is no way for them to do that.
+    # is no way for them to do that. Well, actually the operator could
+    # upload a zero byte resource, but then we would need to uninstall
+    # the snap before reinstalling from the store and that has the
+    # potential for data loss.
     if hookenv.has_juju_version('2.0'):
         res_path = _resource_get(snapname)
         if res_path is False:
