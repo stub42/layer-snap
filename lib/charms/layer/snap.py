@@ -31,14 +31,12 @@ def install(snapname, **kw):
 
     Sets the snap.installed.{snapname} state.
 
-    If the snap.installed.{snapname} state is already set and
-    the snap options have been changed, then the refresh() function
-    is called.
+    If the snap.installed.{snapname} state is already set then the refresh()
+    function is called.
     '''
     installed_state = 'snap.installed.{}'.format(snapname)
     if reactive.is_state(installed_state):
-        if data_changed('snap.opts.{}'.format(snapname), kw):
-            refresh(snapname, **kw)
+        refresh(snapname, **kw)
     else:
         if hookenv.has_juju_version('2.0'):
             res_path = _resource_get(snapname)
@@ -150,6 +148,9 @@ def _install_store(snapname, **kw):
 
 
 def _refresh_store(snapname, **kw):
+    if not data_changed('snap.opts.{}'.format(snapname), kw):
+        return
+
     cmd = ['snap', 'refresh']
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
