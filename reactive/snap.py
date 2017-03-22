@@ -33,7 +33,9 @@ from charms.reactive.helpers import data_changed
 def install():
     opts = layer.options('snap')
     for snapname, snap_opts in opts.items():
-        snap.install(snapname, **snap_opts)
+        installed_state = 'snap.installed.{}'.format(snapname)
+        if not reactive.is_state(installed_state):
+            snap.install(snapname, **snap_opts)
     if data_changed('snap.install.opts', opts):
         snap.connect_all()
 
