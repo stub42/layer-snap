@@ -99,10 +99,14 @@ def update_snap_proxy():
             hookenv.log('snap_proxy config is not supported under '
                         'Ubuntu 14.04 (trusty)', hookenv.ERROR)
         return
+
+    path = '/etc/systemd/system/snapd.service.d/snap_layer_proxy.conf'
+    if not proxy and not os.path.exists(path):
+        return  # No proxy asked for and proxy never configured.
+
     if not data_changed('snap.proxy', proxy):
         return  # Short circuit avoids unnecessary restarts.
 
-    path = '/etc/systemd/system/snapd.service.d/snap_layer_proxy.conf'
     if proxy:
         create_snap_proxy_conf(path, proxy)
     else:
