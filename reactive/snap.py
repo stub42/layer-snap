@@ -57,16 +57,28 @@ def get_series():
                                    universal_newlines=True).strip()
 
 
+def snapd_supported():
+    # snaps are not supported in trusty lxc containers.
+    if get_series() == 'trusty' and host.is_container():
+        return False
+    return True  # For all other cases, assume true.
+
+
 def ensure_snapd():
+    if not snapd_supported():
+        hookenv.log('Snaps do not work in this environment', hookenv.ERROR)
+        return
+
     # I don't use the apt layer, because that would tie this layer
     # too closely to apt packaging. Perhaps this is a snap-only system.
     if not shutil.which('snap'):
         cmd = ['apt', 'install', '-y', 'snapd']
         subprocess.check_call(cmd, universal_newlines=True)
+
     # Work around lp:1628289. Remove this stanza once snapd depends
     # on the necessary package and snaps work in lxd xenial containers
     # without the workaround.
-    if get_series() == 'xenial' and not shutil.which('squashfuse'):
+    if host.is_container() and not shutil.which('squashfuse'):
         cmd = ['apt', 'install', '-y', 'squashfuse']
         subprocess.check_call(cmd, universal_newlines=True)
 
@@ -79,6 +91,14 @@ def update_snap_proxy():
     # to ensure proxies are configured before attempting installs or
     # updates.
     proxy = hookenv.config()['snap_proxy']
+
+    if get_series() == 'trusty':
+        # The hack to configure a snapd proxy only works under
+        # xenial or later.
+        if proxy:
+            hookenv.log('snap_proxy config is not supported under '
+                        'Ubuntu 14.04 (trusty)', hookenv.ERROR)
+        return
     if not data_changed('snap.proxy', proxy):
         return  # Short circuit avoids unnecessary restarts.
 
