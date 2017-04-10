@@ -21,6 +21,7 @@ from charmhelpers.core import hookenv
 from charms import layer
 from charms import reactive
 from charms.reactive.helpers import any_file_changed, data_changed
+from time import sleep
 
 
 def install(snapname, **kw):
@@ -134,17 +135,26 @@ def _install_store(snapname, **kw):
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Installing {} from store'.format(snapname))
-    # Per https://bugs.launchpad.net/bugs/1622782, we don't
-    # get a useful error code out of 'snap install', much like
-    # 'snap refresh' below.
-    try:
-        out = subprocess.check_output(cmd, universal_newlines=True,
-                                      stderr=subprocess.STDOUT)
-        print(out)
-    except subprocess.CalledProcessError as x:
-        print(x.output)
-        if "already installed" not in x.output:
-            raise
+    # Attempting the snap install 3 times to resolve unexpected EOF.
+    # This is a work around to lp:1677557. Stop doing this once it
+    # is resolved everywhere.
+    for attempt in range(3):
+        try:
+            out = subprocess.check_output(cmd, universal_newlines=True,
+                                          stderr=subprocess.STDOUT)
+            print(out)
+            break
+        except subprocess.CalledProcessError as x:
+            print(x.output)
+            # Per https://bugs.launchpad.net/bugs/1622782, we don't
+            # get a useful error code out of 'snap install', much like
+            # 'snap refresh' below. Remove this when we can rely on
+            # snap installs everywhere returning 0 for 'already insatlled'
+            if "already installed" in x.output:
+                break
+            if attempt == 2:
+                raise
+            sleep(5)
 
 
 def _refresh_store(snapname, **kw):
