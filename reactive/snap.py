@@ -79,7 +79,7 @@ def ensure_snapd():
     # on the necessary package and snaps work in lxd xenial containers
     # without the workaround.
     if host.is_container() and not shutil.which('squashfuse'):
-        cmd = ['apt', 'install', '-y', 'squashfuse']
+        cmd = ['apt', 'install', '-y', 'squashfuse', 'fuse']
         subprocess.check_call(cmd, universal_newlines=True)
 
 
