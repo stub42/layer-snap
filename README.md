@@ -136,7 +136,9 @@ charm release cs:~me/mycharm-1 --channel=beta --resource mysnap-0
 juju deploy cs:~me/mycharm --channel=beta
 ```
 
-:watch: This should no longer be required once [:bug: Issue 103](https://github.com/juju/charmstore-client/issues/103 juju/charmstore-client/103) is dealt with.
+:watch: This should no longer be required once
+[:bug: Issue 103](https://github.com/juju/charmstore-client/issues/103)
+is dealt with.
 
 
 ## Support
