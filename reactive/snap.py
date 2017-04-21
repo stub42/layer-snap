@@ -83,6 +83,20 @@ def ensure_snapd():
         subprocess.check_call(cmd, universal_newlines=True)
 
 
+def proxy_settings():
+    config = hookenv.config()
+    snap_proxy = config['snap_proxy']
+    proxy_env = {}
+    if config['use_juju_proxy']:
+        proxy_vars = ('http_proxy', 'https_proxy', 'no_proxy')
+        proxy_env = {key: value for key, value in os.environ.items()
+                     if key in proxy_vars}
+    if snap_proxy:
+        proxy_env['http_proxy'] = snap_proxy
+        proxy_env['https_proxy'] = snap_proxy
+    return proxy_env
+
+
 def update_snap_proxy():
     # This is a hack based on
     # https://bugs.launchpad.net/layer-snap/+bug/1533899/comments/1
@@ -90,7 +104,8 @@ def update_snap_proxy():
     # Note we can't do this in a standard reactive handler as we need
     # to ensure proxies are configured before attempting installs or
     # updates.
-    proxy = hookenv.config()['snap_proxy']
+    config = hookenv.config()
+    proxy = proxy_settings()
 
     if get_series() == 'trusty':
         # The hack to configure a snapd proxy only works under
@@ -104,13 +119,15 @@ def update_snap_proxy():
     if not proxy and not os.path.exists(path):
         return  # No proxy asked for and proxy never configured.
 
-    if not data_changed('snap.proxy', proxy):
+    if proxy == config.get('_snap_proxy'):
         return  # Short circuit avoids unnecessary restarts.
 
     if proxy:
         create_snap_proxy_conf(path, proxy)
     else:
         remove_snap_proxy_conf(path)
+
+    config['_snap_proxy'] = proxy
     subprocess.check_call(['systemctl', 'daemon-reload'],
                           universal_newlines=True)
     time.sleep(2)
@@ -123,9 +140,9 @@ def create_snap_proxy_conf(path, proxy):
     content = dedent('''\
                         # Managed by Juju
                         [Service]
-                        Environment=http_proxy={}
-                        Environment=https_proxy={}
-                        ''').format(proxy, proxy)
+                        ''')
+    for proxy_key, proxy_value in proxy:
+        content += 'Environment={}={}\n'.format(proxy_key, proxy_value)
     host.write_file(path, content.encode())
 
 

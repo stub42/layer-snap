@@ -19,3 +19,8 @@ options:
       HTTP/HTTPS web proxy for Snappy to use when accessing the snap store.
     type: string
     default: ""
+  use_juju_proxy:
+    description: >
+      Use the juju proxy settings for Snappy when accessing the snap store.
+    type: boolean
+    default: true
