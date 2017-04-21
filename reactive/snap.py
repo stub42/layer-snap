@@ -141,7 +141,7 @@ def create_snap_proxy_conf(path, proxy):
                         # Managed by Juju
                         [Service]
                         ''')
-    for proxy_key, proxy_value in proxy:
+    for proxy_key, proxy_value in proxy.items():
         content += 'Environment={}={}\n'.format(proxy_key, proxy_value)
     host.write_file(path, content.encode())
 
