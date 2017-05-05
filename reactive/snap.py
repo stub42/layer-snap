@@ -84,13 +84,12 @@ def ensure_snapd():
 
 
 def proxy_settings():
-    config = hookenv.config()
-    snap_proxy = config['snap_proxy']
     proxy_env = {}
-    if config['use_juju_proxy']:
-        proxy_vars = ('http_proxy', 'https_proxy', 'no_proxy')
-        proxy_env = {key: value for key, value in os.environ.items()
-                     if key in proxy_vars}
+    proxy_vars = ('http_proxy', 'https_proxy', 'no_proxy')
+    proxy_env = {key: value for key, value in os.environ.items()
+                 if key in proxy_vars}
+
+    snap_proxy = hookenv.config()['snap_proxy']
     if snap_proxy:
         proxy_env['http_proxy'] = snap_proxy
         proxy_env['https_proxy'] = snap_proxy
@@ -104,7 +103,6 @@ def update_snap_proxy():
     # Note we can't do this in a standard reactive handler as we need
     # to ensure proxies are configured before attempting installs or
     # updates.
-    config = hookenv.config()
     proxy = proxy_settings()
 
     if get_series() == 'trusty':
@@ -119,7 +117,7 @@ def update_snap_proxy():
     if not proxy and not os.path.exists(path):
         return  # No proxy asked for and proxy never configured.
 
-    if proxy == config.get('_snap_proxy'):
+    if not data_changed('snap.proxy', proxy):
         return  # Short circuit avoids unnecessary restarts.
 
     if proxy:
@@ -127,7 +125,6 @@ def update_snap_proxy():
     else:
         remove_snap_proxy_conf(path)
 
-    config['_snap_proxy'] = proxy
     subprocess.check_call(['systemctl', 'daemon-reload'],
                           universal_newlines=True)
     time.sleep(2)
