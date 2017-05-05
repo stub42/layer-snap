@@ -84,7 +84,6 @@ def ensure_snapd():
 
 
 def proxy_settings():
-    proxy_env = {}
     proxy_vars = ('http_proxy', 'https_proxy', 'no_proxy')
     proxy_env = {key: value for key, value in os.environ.items()
                  if key in proxy_vars}
@@ -124,7 +123,6 @@ def update_snap_proxy():
         create_snap_proxy_conf(path, proxy)
     else:
         remove_snap_proxy_conf(path)
-
     subprocess.check_call(['systemctl', 'daemon-reload'],
                           universal_newlines=True)
     time.sleep(2)
