@@ -83,6 +83,18 @@ def ensure_snapd():
         subprocess.check_call(cmd, universal_newlines=True)
 
 
+def proxy_settings():
+    proxy_vars = ('http_proxy', 'https_proxy', 'no_proxy')
+    proxy_env = {key: value for key, value in os.environ.items()
+                 if key in proxy_vars}
+
+    snap_proxy = hookenv.config()['snap_proxy']
+    if snap_proxy:
+        proxy_env['http_proxy'] = snap_proxy
+        proxy_env['https_proxy'] = snap_proxy
+    return proxy_env
+
+
 def update_snap_proxy():
     # This is a hack based on
     # https://bugs.launchpad.net/layer-snap/+bug/1533899/comments/1
@@ -90,7 +102,7 @@ def update_snap_proxy():
     # Note we can't do this in a standard reactive handler as we need
     # to ensure proxies are configured before attempting installs or
     # updates.
-    proxy = hookenv.config()['snap_proxy']
+    proxy = proxy_settings()
 
     if get_series() == 'trusty':
         # The hack to configure a snapd proxy only works under
@@ -123,9 +135,9 @@ def create_snap_proxy_conf(path, proxy):
     content = dedent('''\
                         # Managed by Juju
                         [Service]
-                        Environment=http_proxy={}
-                        Environment=https_proxy={}
-                        ''').format(proxy, proxy)
+                        ''')
+    for proxy_key, proxy_value in proxy.items():
+        content += 'Environment={}={}\n'.format(proxy_key, proxy_value)
     host.write_file(path, content.encode())
 
 
