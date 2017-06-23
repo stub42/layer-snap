@@ -73,6 +73,9 @@ def ensure_snapd():
     # too closely to apt packaging. Perhaps this is a snap-only system.
     if not shutil.which('snap'):
         cmd = ['apt', 'install', '-y', 'snapd']
+        # LP:1699986: Force install of systemd on Trusty.
+        if get_series() == 'trusty':
+            cmd.append('systemd')
         subprocess.check_call(cmd, universal_newlines=True)
 
     # Work around lp:1628289. Remove this stanza once snapd depends
