@@ -17,6 +17,7 @@
 charms.reactive helpers for dealing with Snap packages.
 '''
 import os.path
+from os import uname
 import shutil
 import subprocess
 from textwrap import dedent
@@ -32,7 +33,13 @@ from charms.reactive.helpers import data_changed
 
 def install():
     opts = layer.options('snap')
+    arch = uname()[4]
+    supported_archs = opts.pop('supported-architectures', None)
     for snapname, snap_opts in opts.items():
+        supported_archs = snap_opts.pop('supported-architectures', None)
+        if supported_archs and arch not in supported_archs:
+            hookenv.log('Snap {} not supported on this architecture'.format(snapname))
+            continue
         installed_state = 'snap.installed.{}'.format(snapname)
         if not reactive.is_state(installed_state):
             snap.install(snapname, **snap_opts)
@@ -42,7 +49,11 @@ def install():
 
 def refresh():
     opts = layer.options('snap')
+    arch = uname()[4]
     for snapname, snap_opts in opts.items():
+        supported_archs = snap_opts.pop('supported-architectures', None)
+        if supported_archs and arch not in supported_archs:
+            continue
         snap.refresh(snapname, **snap_opts)
     snap.connect_all()
 
