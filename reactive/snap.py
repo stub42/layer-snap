@@ -34,7 +34,6 @@ from charms.reactive.helpers import data_changed
 def install():
     opts = layer.options('snap')
     arch = uname()[4]
-    supported_archs = opts.pop('supported-architectures', None)
     for snapname, snap_opts in opts.items():
         supported_archs = snap_opts.pop('supported-architectures', None)
         if supported_archs and arch not in supported_archs:
