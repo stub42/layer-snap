@@ -24,6 +24,7 @@ from textwrap import dedent
 import time
 
 from charmhelpers.core import hookenv, host
+from charmhelpers.core.hookenv import ERROR
 from charms import layer
 from charms import reactive
 from charms.layer import snap
@@ -33,11 +34,18 @@ from charms.reactive.helpers import data_changed
 
 def install():
     opts = layer.options('snap')
+    # supported-architectures is EXPERIMENTAL and undocumented.
+    # It probably should live in the base layer, blocking the charm
+    # during bootstrap if the arch is unsupported.
     arch = uname()[4]
     for snapname, snap_opts in opts.items():
         supported_archs = snap_opts.pop('supported-architectures', None)
         if supported_archs and arch not in supported_archs:
-            hookenv.log('Snap {} not supported on this architecture'.format(snapname))
+            # Note that this does *not* error. The charm will need to
+            # cope with the snaps it requested never getting installed,
+            # likely by doing its own check on supported-architectures.
+            hookenv.log('Snap {} not supported on {!r} architecture'
+                        ''.format(snapname, arch), ERROR)
             continue
         installed_state = 'snap.installed.{}'.format(snapname)
         if not reactive.is_state(installed_state):
@@ -48,6 +56,9 @@ def install():
 
 def refresh():
     opts = layer.options('snap')
+    # supported-architectures is EXPERIMENTAL and undocumented.
+    # It probably should live in the base layer, blocking the charm
+    # during bootstrap if the arch is unsupported.
     arch = uname()[4]
     for snapname, snap_opts in opts.items():
         supported_archs = snap_opts.pop('supported-architectures', None)
