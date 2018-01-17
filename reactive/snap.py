@@ -16,20 +16,25 @@
 '''
 charms.reactive helpers for dealing with Snap packages.
 '''
+from distutils.version import LooseVersion
 import os.path
 from os import uname
 import shutil
 import subprocess
+import tempfile
 from textwrap import dedent
 import time
 
 from charmhelpers.core import hookenv, host
 from charmhelpers.core.hookenv import ERROR
+from charmhelpers.fetch import add_source, apt_update, apt_install
+from charmhelpers.fetch.archiveurl import ArchiveUrlFetchHandler
 from charms import layer
 from charms import reactive
 from charms.layer import snap
 from charms.reactive import hook
 from charms.reactive.helpers import data_changed
+import yaml
 
 
 def install():
@@ -168,6 +173,83 @@ def ensure_path():
         os.environ['PATH'] += ':/snap/bin'
 
 
+def _get_snapd_version():
+    process = subprocess.run(
+        ['snap', 'version'], check=True,
+        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+        universal_newlines=True
+    )
+    version_info = dict(line.split() for line in process.stdout.splitlines())
+    return LooseVersion(version_info['snapd'])
+
+
+def ensure_snapd_min_version(min_version):
+    snapd_version = _get_snapd_version()
+    if snapd_version < LooseVersion(min_version):
+        # Temporary until LP:1735344 lands
+        add_source('ppa:snappy-dev/image', fail_invalid=True)
+        apt_update()
+        apt_install('snapd')
+        snapd_version = _get_snapd_version()
+        if snapd_version < LooseVersion(min_version):
+            hookenv.log(
+                "Failed to install snapd >= {}".format(min_version), ERROR)
+
+
+def known_stores():
+    process = subprocess.run(
+        ['snap', 'known', 'store'], check=True,
+        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+        universal_newlines=True
+    )
+    store_ids = set()
+    # Skip signature of assertions
+    for part in process.stdout.split('\n\n')[::2]:
+        fields = yaml.safe_load(part)
+        store_ids.add(fields['store'])
+    return store_ids
+
+
+def configure_snap_enterprise_proxy():
+    enterprise_proxy_url = hookenv.config()['snap_proxy_url']
+    if not enterprise_proxy_url:
+        return  # No enterprise proxy desired
+    if reactive.get_state('snap.enterprise_proxy.configured'):
+        return  # Already done by us
+    ensure_snapd_min_version('2.30')
+    proxy_store_process = subprocess.run(
+        ['snap', 'get', 'core', 'proxy.store'],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    if proxy_store_process.returncode == 0:
+        # We already have a store configured (probably by someone
+        # else), bail out.
+        return
+    assertions_url = "{}/v2/auth/store/assertions".format(enterprise_proxy_url)
+    handler = ArchiveUrlFetchHandler()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_bundle = os.path.join(tmpdir, "assertions.bundle")
+        handler.download(assertions_url, local_bundle)
+        subprocess.run(
+            ["snap", "ack", local_bundle], check=True, stdin=subprocess.DEVNULL
+        )
+    store_ids = known_stores()
+    if len(store_ids) > 1:
+        hookenv.log(
+            "More than one ({}) store configured".format(len(store_ids)),
+            hookenv.ERROR)
+        return
+    store_id = store_ids.pop()
+    subprocess.run(
+        ['snap', 'set', 'core', 'proxy.store={}'.format(store_id)], check=True,
+        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+        universal_newlines=True
+    )
+    reactive.set_state('snap.enterprise_proxy.configured')
+
+
 # Per https://github.com/juju-solutions/charms.reactive/issues/33,
 # this module may be imported multiple times so ensure the
 # initialization hook is only registered once. I have to piggy back
@@ -183,5 +265,6 @@ if not hasattr(reactive, '_snap_registered'):
     hookenv.atstart(ensure_snapd)
     hookenv.atstart(ensure_path)
     hookenv.atstart(update_snap_proxy)
+    hookenv.atstart(configure_snap_enterprise_proxy)
     hookenv.atstart(install)
     reactive._snap_registered = True
