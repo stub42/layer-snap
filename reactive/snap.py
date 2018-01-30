@@ -108,7 +108,7 @@ def ensure_snapd():
 
 
 def proxy_settings():
-    proxy_vars = ('http_proxy', 'https_proxy', 'no_proxy')
+    proxy_vars = ('http_proxy', 'https_proxy')
     proxy_env = {key: value for key, value in os.environ.items()
                  if key in proxy_vars}
 
