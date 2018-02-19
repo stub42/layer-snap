@@ -27,14 +27,25 @@ import time
 
 from charmhelpers.core import hookenv, host
 from charmhelpers.core.hookenv import ERROR
-from charmhelpers.fetch import add_source, apt_update, apt_install
 from charmhelpers.fetch.archiveurl import ArchiveUrlFetchHandler
 from charms import layer
 from charms import reactive
 from charms.layer import snap
-from charms.reactive import hook
+from charms.reactive import hook, is_flag_set
 from charms.reactive.helpers import data_changed
 import yaml
+
+
+class UnsatisfiedMinimumVersionError(Exception):
+
+    def __init__(self, desired, actual):
+        super().__init__()
+        self.desired = desired
+        self.actual = actual
+
+    def __str__(self):
+        return "Could not install snapd >= {0.desired}, got {0.actual}".format(
+            self)
 
 
 def install():
@@ -186,6 +197,7 @@ def _get_snapd_version():
 def ensure_snapd_min_version(min_version):
     snapd_version = _get_snapd_version()
     if snapd_version < LooseVersion(min_version):
+        from charmhelpers.fetch import add_source, apt_update, apt_install
         # Temporary until LP:1735344 lands
         add_source('ppa:snappy-dev/image', fail_invalid=True)
         apt_update()
@@ -194,6 +206,7 @@ def ensure_snapd_min_version(min_version):
         if snapd_version < LooseVersion(min_version):
             hookenv.log(
                 "Failed to install snapd >= {}".format(min_version), ERROR)
+            raise UnsatisfiedMinimumVersionError(min_version, snapd_version)
 
 
 def known_stores():
@@ -214,7 +227,7 @@ def configure_snap_enterprise_proxy():
     enterprise_proxy_url = hookenv.config()['snap_proxy_url']
     if not enterprise_proxy_url:
         return  # No enterprise proxy desired
-    if reactive.get_state('snap.enterprise_proxy.configured'):
+    if not is_flag_set('config.changed.snap_proxy_url'):
         return  # Already done by us
     ensure_snapd_min_version('2.30')
     proxy_store_process = subprocess.run(
@@ -226,6 +239,9 @@ def configure_snap_enterprise_proxy():
     if proxy_store_process.returncode == 0:
         # We already have a store configured (probably by someone
         # else), bail out.
+        _, message = hookenv.status_get()
+        annotated_message = "(using existing snap proxy). {}".format(message)
+        hookenv.status_set("blocked", annotated_message)
         return
     assertions_url = "{}/v2/auth/store/assertions".format(enterprise_proxy_url)
     handler = ArchiveUrlFetchHandler()
@@ -247,7 +263,6 @@ def configure_snap_enterprise_proxy():
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
         universal_newlines=True
     )
-    reactive.set_state('snap.enterprise_proxy.configured')
 
 
 # Per https://github.com/juju-solutions/charms.reactive/issues/33,
