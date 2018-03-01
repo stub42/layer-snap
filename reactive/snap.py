@@ -16,6 +16,7 @@
 '''
 charms.reactive helpers for dealing with Snap packages.
 '''
+import contextlib
 from distutils.version import LooseVersion
 import os.path
 from os import uname
@@ -31,7 +32,6 @@ from charmhelpers.fetch.archiveurl import ArchiveUrlFetchHandler
 from charms import layer
 from charms import reactive
 from charms.layer import snap
-from charms.reactive import hook, is_flag_set
 from charms.reactive.helpers import data_changed
 import yaml
 
@@ -46,6 +46,10 @@ class UnsatisfiedMinimumVersionError(Exception):
     def __str__(self):
         return "Could not install snapd >= {0.desired}, got {0.actual}".format(
             self)
+
+
+class InvalidBundleError(Exception):
+    pass
 
 
 def install():
@@ -84,7 +88,7 @@ def refresh():
     snap.connect_all()
 
 
-@hook('upgrade-charm')
+@reactive.hook('upgrade-charm')
 def upgrade_charm():
     refresh()
 
@@ -209,55 +213,45 @@ def ensure_snapd_min_version(min_version):
             raise UnsatisfiedMinimumVersionError(min_version, snapd_version)
 
 
-def known_stores():
-    process = subprocess.run(
-        ['snap', 'known', 'store'], check=True,
-        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-        universal_newlines=True
-    )
-    store_ids = set()
-    # Skip signature of assertions
-    for part in process.stdout.split('\n\n')[::2]:
-        fields = yaml.safe_load(part)
-        store_ids.add(fields['store'])
-    return store_ids
-
-
-def configure_snap_enterprise_proxy():
-    enterprise_proxy_url = hookenv.config()['snap_proxy_url']
-    if not enterprise_proxy_url:
-        return  # No enterprise proxy desired
-    if not is_flag_set('config.changed.snap_proxy_url'):
-        return  # Already done by us
-    ensure_snapd_min_version('2.30')
-    proxy_store_process = subprocess.run(
-        ['snap', 'get', 'core', 'proxy.store'],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True)
-    if proxy_store_process.returncode == 0:
-        # We already have a store configured (probably by someone
-        # else), bail out.
-        _, message = hookenv.status_get()
-        annotated_message = "(using existing snap proxy). {}".format(message)
-        hookenv.status_set("blocked", annotated_message)
-        return
-    assertions_url = "{}/v2/auth/store/assertions".format(enterprise_proxy_url)
+@contextlib.contextmanager
+def downloaded_assertion_bundle(enterprise_proxy):
+    """Download the assertion bundle to a temporary directory."""
+    assertions_url = '{}/v2/auth/store/assertions'.format(
+        enterprise_proxy)
     handler = ArchiveUrlFetchHandler()
     with tempfile.TemporaryDirectory() as tmpdir:
         local_bundle = os.path.join(tmpdir, "assertions.bundle")
         handler.download(assertions_url, local_bundle)
-        subprocess.run(
-            ["snap", "ack", local_bundle], check=True, stdin=subprocess.DEVNULL
-        )
-    store_ids = known_stores()
-    if len(store_ids) > 1:
-        hookenv.log(
-            "More than one ({}) store configured".format(len(store_ids)),
-            hookenv.ERROR)
+        yield local_bundle
+
+
+def parse_store_assertion(bundle):
+    store_asserts = set()
+    for part in bundle.split('\n\n')[::2]:
+        fields = yaml.safe_load(part)
+        if fields['type'] != 'store':
+            continue
+        store_asserts.add(tuple(fields.items()))
+    if len(store_asserts) != 1:
+        raise InvalidBundleError(repr(store_asserts))
+    return dict(store_asserts.pop())
+
+
+def configure_snap_enterprise_proxy():
+    if not reactive.is_flag_set('config.changed.snap_proxy_url'):
         return
-    store_id = store_ids.pop()
+    ensure_snapd_min_version('2.30')
+    enterprise_proxy_url = hookenv.config()['snap_proxy_url']
+    if enterprise_proxy_url:
+        with downloaded_assertion_bundle(enterprise_proxy_url) as local_bundle:
+            subprocess.run(['snap', 'ack', local_bundle],
+                           check=True, stdin=subprocess.DEVNULL)
+            with open(local_bundle) as fh:
+                bundle = fh.read()
+            store_assertion = parse_store_assertion(bundle)
+            store_id = store_assertion['id']
+    else:
+        store_id = ''
     subprocess.run(
         ['snap', 'set', 'core', 'proxy.store={}'.format(store_id)], check=True,
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
