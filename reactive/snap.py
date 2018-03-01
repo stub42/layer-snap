@@ -16,24 +16,26 @@
 '''
 charms.reactive helpers for dealing with Snap packages.
 '''
-import contextlib
 from distutils.version import LooseVersion
 import os.path
 from os import uname
 import shutil
 import subprocess
-import tempfile
 from textwrap import dedent
 import time
 
 from charmhelpers.core import hookenv, host
 from charmhelpers.core.hookenv import ERROR
-from charmhelpers.fetch.archiveurl import ArchiveUrlFetchHandler
 from charms import layer
 from charms import reactive
 from charms.layer import snap
 from charms.reactive.helpers import data_changed
-import yaml
+
+import six
+if six.PY3:
+    from urllib.request import urlretrieve
+else:
+    from urllib import urlretrieve
 
 
 class UnsatisfiedMinimumVersionError(Exception):
@@ -213,28 +215,12 @@ def ensure_snapd_min_version(min_version):
             raise UnsatisfiedMinimumVersionError(min_version, snapd_version)
 
 
-@contextlib.contextmanager
-def downloaded_assertion_bundle(enterprise_proxy):
-    """Download the assertion bundle to a temporary directory."""
-    assertions_url = '{}/v2/auth/store/assertions'.format(
-        enterprise_proxy)
-    handler = ArchiveUrlFetchHandler()
-    with tempfile.TemporaryDirectory() as tmpdir:
-        local_bundle = os.path.join(tmpdir, "assertions.bundle")
-        handler.download(assertions_url, local_bundle)
-        yield local_bundle
-
-
-def parse_store_assertion(bundle):
-    store_asserts = set()
-    for part in bundle.split('\n\n')[::2]:
-        fields = yaml.safe_load(part)
-        if fields['type'] != 'store':
-            continue
-        store_asserts.add(tuple(fields.items()))
-    if len(store_asserts) != 1:
-        raise InvalidBundleError(repr(store_asserts))
-    return dict(store_asserts.pop())
+def download_assertion_bundle(proxy_url):
+    """Download proxy assertion bundle and store id"""
+    assertions_url = '{}/v2/auth/store/assertions'.format(proxy_url)
+    local_bundle, headers = urlretrieve(assertions_url)
+    store_id = headers['X-Assertion-Store-Id']
+    return local_bundle, store_id
 
 
 def configure_snap_enterprise_proxy():
@@ -243,20 +229,30 @@ def configure_snap_enterprise_proxy():
     ensure_snapd_min_version('2.30')
     enterprise_proxy_url = hookenv.config()['snap_proxy_url']
     if enterprise_proxy_url:
-        with downloaded_assertion_bundle(enterprise_proxy_url) as local_bundle:
-            subprocess.run(['snap', 'ack', local_bundle],
-                           check=True, stdin=subprocess.DEVNULL)
-            with open(local_bundle) as fh:
-                bundle = fh.read()
-            store_assertion = parse_store_assertion(bundle)
-            store_id = store_assertion['id']
+        bundle, store_id = download_assertion_bundle(enterprise_proxy_url)
+        try:
+            subprocess.run(
+                ['snap', 'ack', bundle],
+                check=True,
+                stdin=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError as e:
+            raise InvalidBundleError(
+                'snapd could not ack the proxy assertion: ' + e.output)
     else:
         store_id = ''
-    subprocess.run(
-        ['snap', 'set', 'core', 'proxy.store={}'.format(store_id)], check=True,
-        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-        universal_newlines=True
-    )
+
+    try:
+        subprocess.run(
+            ['snap', 'set', 'core', 'proxy.store={}'.format(store_id)],
+            check=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise InvalidBundleError(
+            'Proxy ID from header did not match store assertion: ' + e.output)
 
 
 # Per https://github.com/juju-solutions/charms.reactive/issues/33,
