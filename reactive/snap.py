@@ -26,6 +26,7 @@ import time
 
 from charmhelpers.core import hookenv, host
 from charmhelpers.core.hookenv import ERROR
+from charmhelpers.core.host import lsb_release, write_file
 from charms import layer
 from charms import reactive
 from charms.layer import snap
@@ -200,14 +201,28 @@ def _get_snapd_version():
     return LooseVersion(version_info['snapd'])
 
 
+PREFERENCES = """\
+Package: *
+Pin: release a={}-proposed
+Pin-Priority: 400
+"""
+
+
 def ensure_snapd_min_version(min_version):
     snapd_version = _get_snapd_version()
     if snapd_version < LooseVersion(min_version):
         from charmhelpers.fetch import add_source, apt_update, apt_install
         # Temporary until LP:1735344 lands
-        add_source('ppa:snappy-dev/image', fail_invalid=True)
+        add_source('distro-proposed', fail_invalid=True)
+        distro = lsb_release()['DISTRIB_CODENAME']
+        # disable proposed by default, needs to explicit
+        write_file(
+            '/etc/apt/preferences.d/proposed',
+            PREFERENCES.format(distro),
+        )
         apt_update()
-        apt_install('snapd')
+        # explicitly install snapd from proposed
+        apt_install('snapd/{}-proposed'.format(distro))
         snapd_version = _get_snapd_version()
         if snapd_version < LooseVersion(min_version):
             hookenv.log(
