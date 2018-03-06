@@ -23,20 +23,15 @@ import shutil
 import subprocess
 from textwrap import dedent
 import time
+from urllib.request import urlretrieve
 
 from charmhelpers.core import hookenv, host
 from charmhelpers.core.hookenv import ERROR
-from charmhelpers.core.host import lsb_release, write_file
+from charmhelpers.core.host import write_file
 from charms import layer
 from charms import reactive
 from charms.layer import snap
 from charms.reactive.helpers import data_changed
-
-import six
-if six.PY3:
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
 
 
 class UnsatisfiedMinimumVersionError(Exception):
@@ -111,7 +106,7 @@ def snapd_supported():
 def ensure_snapd():
     if not snapd_supported():
         hookenv.log('Snaps do not work in this environment', hookenv.ERROR)
-        return
+        raise Exception('Snaps do not work in this environment')
 
     # I don't use the apt layer, because that would tie this layer
     # too closely to apt packaging. Perhaps this is a snap-only system.
@@ -192,9 +187,9 @@ def ensure_path():
 
 
 def _get_snapd_version():
-    process = subprocess.run(
-        ['snap', 'version'], check=True,
-        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+    process = subprocess.check_output(
+        ['snap', 'version'],
+        stdin=subprocess.DEVNULL,
         universal_newlines=True
     )
     version_info = dict(line.split() for line in process.stdout.splitlines())
@@ -214,7 +209,7 @@ def ensure_snapd_min_version(min_version):
         from charmhelpers.fetch import add_source, apt_update, apt_install
         # Temporary until LP:1735344 lands
         add_source('distro-proposed', fail_invalid=True)
-        distro = lsb_release()['DISTRIB_CODENAME']
+        distro = get_series()
         # disable proposed by default, needs to explicit
         write_file(
             '/etc/apt/preferences.d/proposed',
@@ -246,10 +241,10 @@ def configure_snap_enterprise_proxy():
     if enterprise_proxy_url:
         bundle, store_id = download_assertion_bundle(enterprise_proxy_url)
         try:
-            subprocess.run(
+            subprocess.check_output(
                 ['snap', 'ack', bundle],
-                check=True,
                 stdin=subprocess.DEVNULL,
+                universal_newlines=True,
             )
         except subprocess.CalledProcessError as e:
             raise InvalidBundleError(
@@ -260,9 +255,7 @@ def configure_snap_enterprise_proxy():
     try:
         subprocess.run(
             ['snap', 'set', 'core', 'proxy.store={}'.format(store_id)],
-            check=True,
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
             universal_newlines=True,
         )
     except subprocess.CalledProcessError as e:
