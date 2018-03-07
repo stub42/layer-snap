@@ -16,20 +16,38 @@
 '''
 charms.reactive helpers for dealing with Snap packages.
 '''
+from distutils.version import LooseVersion
 import os.path
 from os import uname
 import shutil
 import subprocess
 from textwrap import dedent
 import time
+from urllib.request import urlretrieve
 
 from charmhelpers.core import hookenv, host
 from charmhelpers.core.hookenv import ERROR
+from charmhelpers.core.host import write_file
 from charms import layer
 from charms import reactive
 from charms.layer import snap
-from charms.reactive import hook
 from charms.reactive.helpers import data_changed
+
+
+class UnsatisfiedMinimumVersionError(Exception):
+
+    def __init__(self, desired, actual):
+        super().__init__()
+        self.desired = desired
+        self.actual = actual
+
+    def __str__(self):
+        return "Could not install snapd >= {0.desired}, got {0.actual}".format(
+            self)
+
+
+class InvalidBundleError(Exception):
+    pass
 
 
 def install():
@@ -68,7 +86,7 @@ def refresh():
     snap.connect_all()
 
 
-@hook('upgrade-charm')
+@reactive.hook('upgrade-charm')
 def upgrade_charm():
     refresh()
 
@@ -88,7 +106,7 @@ def snapd_supported():
 def ensure_snapd():
     if not snapd_supported():
         hookenv.log('Snaps do not work in this environment', hookenv.ERROR)
-        return
+        raise Exception('Snaps do not work in this environment')
 
     # I don't use the apt layer, because that would tie this layer
     # too closely to apt packaging. Perhaps this is a snap-only system.
@@ -168,6 +186,83 @@ def ensure_path():
         os.environ['PATH'] += ':/snap/bin'
 
 
+def _get_snapd_version():
+    stdout = subprocess.check_output(
+        ['snap', 'version'],
+        stdin=subprocess.DEVNULL,
+        universal_newlines=True
+    )
+    version_info = dict(line.split() for line in stdout.splitlines())
+    return LooseVersion(version_info['snapd'])
+
+
+PREFERENCES = """\
+Package: *
+Pin: release a={}-proposed
+Pin-Priority: 400
+"""
+
+
+def ensure_snapd_min_version(min_version):
+    snapd_version = _get_snapd_version()
+    if snapd_version < LooseVersion(min_version):
+        from charmhelpers.fetch import add_source, apt_update, apt_install
+        # Temporary until LP:1735344 lands
+        add_source('distro-proposed', fail_invalid=True)
+        distro = get_series()
+        # disable proposed by default, needs to explicit
+        write_file(
+            '/etc/apt/preferences.d/proposed',
+            PREFERENCES.format(distro),
+        )
+        apt_update()
+        # explicitly install snapd from proposed
+        apt_install('snapd/{}-proposed'.format(distro))
+        snapd_version = _get_snapd_version()
+        if snapd_version < LooseVersion(min_version):
+            hookenv.log(
+                "Failed to install snapd >= {}".format(min_version), ERROR)
+            raise UnsatisfiedMinimumVersionError(min_version, snapd_version)
+
+
+def download_assertion_bundle(proxy_url):
+    """Download proxy assertion bundle and store id"""
+    assertions_url = '{}/v2/auth/store/assertions'.format(proxy_url)
+    local_bundle, headers = urlretrieve(assertions_url)
+    store_id = headers['X-Assertion-Store-Id']
+    return local_bundle, store_id
+
+
+def configure_snap_enterprise_proxy():
+    if not reactive.is_flag_set('config.changed.snap_proxy_url'):
+        return
+    ensure_snapd_min_version('2.30')
+    enterprise_proxy_url = hookenv.config()['snap_proxy_url']
+    if enterprise_proxy_url:
+        bundle, store_id = download_assertion_bundle(enterprise_proxy_url)
+        try:
+            subprocess.check_output(
+                ['snap', 'ack', bundle],
+                stdin=subprocess.DEVNULL,
+                universal_newlines=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise InvalidBundleError(
+                'snapd could not ack the proxy assertion: ' + e.output)
+    else:
+        store_id = ''
+
+    try:
+        subprocess.check_output(
+            ['snap', 'set', 'core', 'proxy.store={}'.format(store_id)],
+            stdin=subprocess.DEVNULL,
+            universal_newlines=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise InvalidBundleError(
+            'Proxy ID from header did not match store assertion: ' + e.output)
+
+
 # Per https://github.com/juju-solutions/charms.reactive/issues/33,
 # this module may be imported multiple times so ensure the
 # initialization hook is only registered once. I have to piggy back
@@ -183,5 +278,6 @@ if not hasattr(reactive, '_snap_registered'):
     hookenv.atstart(ensure_snapd)
     hookenv.atstart(ensure_path)
     hookenv.atstart(update_snap_proxy)
+    hookenv.atstart(configure_snap_enterprise_proxy)
     hookenv.atstart(install)
     reactive._snap_registered = True

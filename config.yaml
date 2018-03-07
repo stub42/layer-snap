@@ -19,3 +19,9 @@ options:
       HTTP/HTTPS web proxy for Snappy to use when accessing the snap store.
     type: string
     default: ""
+  snap_proxy_url:
+    default: ""
+    type: string
+    description: |
+      The address of a Snappy Enterprise Proxy to use for snaps
+      e.g. http://snap-proxy.example.com
