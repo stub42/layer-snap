@@ -187,12 +187,12 @@ def ensure_path():
 
 
 def _get_snapd_version():
-    process = subprocess.check_output(
+    stdout = subprocess.check_output(
         ['snap', 'version'],
         stdin=subprocess.DEVNULL,
         universal_newlines=True
     )
-    version_info = dict(line.split() for line in process.stdout.splitlines())
+    version_info = dict(line.split() for line in stdout.splitlines())
     return LooseVersion(version_info['snapd'])
 
 
@@ -253,7 +253,7 @@ def configure_snap_enterprise_proxy():
         store_id = ''
 
     try:
-        subprocess.run(
+        subprocess.check_output(
             ['snap', 'set', 'core', 'proxy.store={}'.format(store_id)],
             stdin=subprocess.DEVNULL,
             universal_newlines=True,
