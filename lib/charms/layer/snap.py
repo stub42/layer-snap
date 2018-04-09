@@ -105,6 +105,24 @@ def connect_all():
             connect(plug, slot)
 
 
+def disable(snapname):
+    '''Disables a snap in the system
+    '''
+    hookenv.log('Disabling {} snap'.format(snapname))
+    subprocess.check_call(['snap', 'disable', snapname], 
+                          universal_newlines=True)
+    reactive.set_state('snap.disabled.{}'.format(snapname))
+
+
+def enable(snapname):
+    '''Enables a snap in the system
+    '''
+    hookenv.log('Enabling {} snap'.format(snapname))
+    subprocess.check_call(['snap', 'enable', snapname], 
+                          universal_newlines=True)
+    reactive.remove_state('snap.disabled.{}'.format(snapname))
+
+
 def _snap_args(channel='stable', devmode=False, jailmode=False,
                dangerous=False, force_dangerous=False, connect=None,
                classic=False, revision=None):
