@@ -112,7 +112,7 @@ def disable(snapname):
     exist
     '''
     hookenv.log('Disabling {} snap'.format(snapname))
-    subprocess.check_call(['snap', 'disable', snapname], 
+    subprocess.check_call(['snap', 'disable', snapname],
                           universal_newlines=True)
     reactive.set_state('snap.disabled.{}'.format(snapname))
 
@@ -124,9 +124,20 @@ def enable(snapname):
     exist
     '''
     hookenv.log('Enabling {} snap'.format(snapname))
-    subprocess.check_call(['snap', 'enable', snapname], 
+    subprocess.check_call(['snap', 'enable', snapname],
                           universal_newlines=True)
     reactive.remove_state('snap.disabled.{}'.format(snapname))
+
+
+def restart(snapname):
+    '''Restarts a snap in the system
+
+    This method doesn't affect any snap state if requested snap does not
+    exist
+    '''
+    hookenv.log('Restarting {} snap'.format(snapname))
+    subprocess.check_call(['snap', 'restart', snapname],
+                          universal_newlines=True)
 
 
 def set(snapname, key, value):
