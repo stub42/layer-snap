@@ -118,6 +118,8 @@ def disable(snapname):
         hookenv.log(
             'Cannot disable {} snap because it is not installed'.format(
                 snapname), hookenv.WARNING)
+        return
+
     subprocess.check_call(['snap', 'disable', snapname],
                           universal_newlines=True)
     reactive.set_flag('snap.disabled.{}'.format(snapname))
@@ -136,6 +138,8 @@ def enable(snapname):
         hookenv.log(
             'Cannot enable {} snap because it is not installed'.format(
                 snapname), hookenv.WARNING)
+        return
+
     subprocess.check_call(['snap', 'enable', snapname],
                           universal_newlines=True)
     reactive.clear_flag('snap.disabled.{}'.format(snapname))
@@ -152,6 +156,8 @@ def restart(snapname):
         hookenv.log(
             'Cannot restart {} snap because it is not installed'.format(
                 snapname), hookenv.WARNING)
+        return
+
     subprocess.check_call(['snap', 'restart', snapname],
                           universal_newlines=True)
 
@@ -166,6 +172,8 @@ def set(snapname, key, value):
         hookenv.log(
             'Cannot set {} snap config because it is not installed'.format(
                 snapname), hookenv.WARNING)
+        return
+
     subprocess.check_call(
         ['snap', 'set', snapname, '{}={}'.format(key, value)])
 
@@ -181,6 +189,8 @@ def get(snapname, key):
         hookenv.log(
             'Cannot get {} snap config because it is not installed'.format(
                 snapname), hookenv.WARNING)
+        return
+
     return subprocess.check_output(['snap', 'get', snapname, key])
 
 
