@@ -112,6 +112,10 @@ def disable(snapname):
     exist
     '''
     hookenv.log('Disabling {} snap'.format(snapname))
+    if not reactive.is_flag_set('snap.installed.{}'.format(snapname)):
+        hookenv.log(
+            'Cannot disable {} snap because it is not installed'.format(
+                snapname), hookenv.WARNING)
     subprocess.check_call(['snap', 'disable', snapname],
                           universal_newlines=True)
     reactive.set_state('snap.disabled.{}'.format(snapname))
@@ -124,6 +128,10 @@ def enable(snapname):
     exist
     '''
     hookenv.log('Enabling {} snap'.format(snapname))
+    if not reactive.is_flag_set('snap.installed.{}'.format(snapname)):
+        hookenv.log(
+            'Cannot enable {} snap because it is not installed'.format(
+                snapname), hookenv.WARNING)
     subprocess.check_call(['snap', 'enable', snapname],
                           universal_newlines=True)
     reactive.remove_state('snap.disabled.{}'.format(snapname))
@@ -136,6 +144,10 @@ def restart(snapname):
     exist
     '''
     hookenv.log('Restarting {} snap'.format(snapname))
+    if not reactive.is_flag_set('snap.installed.{}'.format(snapname)):
+        hookenv.log(
+            'Cannot restart {} snap because it is not installed'.format(
+                snapname), hookenv.WARNING)
     subprocess.check_call(['snap', 'restart', snapname],
                           universal_newlines=True)
 
@@ -146,6 +158,10 @@ def set(snapname, key, value):
     This method will fail if snapname is not an installed snap
     '''
     hookenv.log('Set config {}={} for snap {}'.format(key, value, snapname))
+    if not reactive.is_flag_set('snap.installed.{}'.format(snapname)):
+        hookenv.log(
+            'Cannot set {} snap config because it is not installed'.format(
+                snapname), hookenv.WARNING)
     subprocess.check_call(
         ['snap', 'set', snapname, '{}={}'.format(key, value)])
 
@@ -157,6 +173,10 @@ def get(snapname, key):
     This method will fail if snapname is not an installed snap
     '''
     hookenv.log('Get config {} for snap {}'.format(key, snapname))
+    if not reactive.is_flag_set('snap.installed.{}'.format(snapname)):
+        hookenv.log(
+            'Cannot get {} snap config because it is not installed'.format(
+                snapname), hookenv.WARNING)
     return subprocess.check_output(['snap', 'get', snapname, key])
 
 
