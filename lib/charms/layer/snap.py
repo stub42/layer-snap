@@ -108,6 +108,8 @@ def connect_all():
 def disable(snapname):
     '''Disables a snap in the system
 
+    Sets the snap.disabled.{snapname} flag
+
     This method doesn't affect any snap state if requested snap does not
     exist
     '''
@@ -118,11 +120,13 @@ def disable(snapname):
                 snapname), hookenv.WARNING)
     subprocess.check_call(['snap', 'disable', snapname],
                           universal_newlines=True)
-    reactive.set_state('snap.disabled.{}'.format(snapname))
+    reactive.set_flag('snap.disabled.{}'.format(snapname))
 
 
 def enable(snapname):
     '''Enables a snap in the system
+
+    Clears the snap.disabled.{snapname} flag
 
     This method doesn't affect any snap state if requeted snap does not
     exist
@@ -134,7 +138,7 @@ def enable(snapname):
                 snapname), hookenv.WARNING)
     subprocess.check_call(['snap', 'enable', snapname],
                           universal_newlines=True)
-    reactive.remove_state('snap.disabled.{}'.format(snapname))
+    reactive.clear_flag('snap.disabled.{}'.format(snapname))
 
 
 def restart(snapname):
