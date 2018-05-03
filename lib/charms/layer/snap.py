@@ -169,7 +169,7 @@ def set(snapname, key, value):
 def get(snapname, key):
     '''Gets configuration options for a snap
 
-    This method returns the output that snactl get command prints out.
+    This method returns the output that snapctl get command prints out.
     This method will fail if snapname is not an installed snap
     '''
     hookenv.log('Get config {} for snap {}'.format(key, snapname))
