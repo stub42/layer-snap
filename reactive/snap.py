@@ -264,7 +264,7 @@ def configure_snap_enterprise_proxy():
             'Proxy ID from header did not match store assertion: ' + e.output)
 
 
-@when('config.changed.snap_refresh')
+@when('config.changed.snapd_refresh')
 def change_snapd_refresh():
     """Set the system refresh.timer option"""
     ensure_snapd_min_version('2.31')
