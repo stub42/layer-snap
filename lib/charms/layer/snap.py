@@ -50,6 +50,12 @@ def install(snapname, **kw):
             _install_store(snapname, **kw)
         reactive.set_state(installed_state)
 
+    # Installing any snap will first ensure that 'core' is installed. Set an
+    # appropriate flag for consumers that want to get/set core options.
+    core_installed = 'snap.installed.core'
+    if not reactive.is_state(core_installed):
+        reactive.set_state(core_installed)
+
 
 def refresh(snapname, **kw):
     '''Update a snap.
