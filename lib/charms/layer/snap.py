@@ -22,6 +22,7 @@ from charms import layer
 from charms import reactive
 from charms.reactive.helpers import any_file_changed, data_changed
 from time import sleep
+from datetime import datetime, timedelta
 
 
 def install(snapname, **kw):
@@ -176,6 +177,41 @@ def set(snapname, key, value):
 
     subprocess.check_call(
         ['snap', 'set', snapname, '{}={}'.format(key, value)])
+
+
+def set_refresh_timer(timer=''):
+    '''Set the system refresh.timer option (snapd 2.31+)
+
+    This method sets how often snapd will refresh installed snaps. Call with
+    an empty timer string to use the system default (currently 4x per day).
+    Use 'max' to schedule refreshes as far into the future as possible
+    (currently 1 month). Also accepts custom timer strings as defined in the
+    refresh.timer section here:
+      https://forum.snapcraft.io/t/system-options/87
+
+    This method does not validate custom strings and will lead to a
+    CalledProcessError if an invalid string is given.
+
+    :param: timer: empty string (default), 'max', or custom string
+    '''
+    if timer == 'max':
+        # A month from yesterday is the farthest we should delay to safely stay
+        # under the 1 month max. Translate that to a valid refresh.timer value.
+        # Examples:
+        # - Today is Friday the 13th, set the refresh timer to
+        # 'thu2' (Thursday the 12th is the 2nd thursday of the month).
+        # - Today is Tuesday the 1st, set the refresh timer to
+        # 'mon5' (Monday the [28..31] is the 5th monday of the month).
+        yesterday = datetime.now() - timedelta(1)
+        dow = yesterday.strftime('%a').lower()
+        # increment after int division because we want occurrence 1-5, not 0-4.
+        occurrence = yesterday.day // 7 + 1
+        timer = '{}{}'.format(dow, occurrence)
+
+    # NB: 'system' became synonymous with 'core' in 2.32.5, but we use 'core'
+    # here to ensure max compatibility.
+    set(snapname='core', key='refresh.timer', value=timer)
+    subprocess.check_call(['systemctl', 'restart', 'snapd.service'])
 
 
 def get(snapname, key):

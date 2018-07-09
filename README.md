@@ -86,13 +86,52 @@ have been installed, so you do not need to worry about installation
 order.
 
 
+### Snap Refresh
+
+By default, the `snapd` daemon will query the Snap Store four (4)
+times per day to process updates for installed snaps. This layer provides
+a charm configuration option for authors and operators to control this
+refresh frequency.
+
+>NOTE: this is a global configuration option and will affect the refresh
+time for all snaps installed on a system.
+
+>NOTE: requires snapd 2.31 or higher.
+
+Examples:
+
+```sh
+## refresh snaps every tuesday
+juju config telegraf snapd_refresh="tue"
+
+## refresh snaps at 11pm on the last (5th) friday of the month
+juju config telegraf snapd_refresh="fri5,23:00"
+
+## use the system default refresh timer
+juju config telegraf snapd_refresh=""
+```
+
+Currently, the `snapd` refresh timer may be delayed up to one (1) month. This
+can be configured using the `max` option:
+
+```sh
+## delay snap refreshes as long as possible
+juju config telegraf snapd_refresh="max"
+```
+
+For more information on the possible values for `snapd_refresh`, see the
+*refresh.timer* section in the [system options][] documentation.
+
+[system options]: https://forum.snapcraft.io/t/system-options/87
+
+
 ## Usage
 
 If you have defined your snaps in layer.yaml for automatic installation
 and updates, there is nothing further to do.
 
 ### API
- 
+
 If your charm need to control installation, update and removal of snaps
 itself, the following methods are available via the `charms.layer.snap`
 package::
