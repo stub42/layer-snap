@@ -22,13 +22,13 @@ options:
   snap_proxy_url:
     default: ""
     type: string
-    description: |
+    description: >
       The address of a Snappy Enterprise Proxy to use for snaps
       e.g. http://snap-proxy.example.com
   snapd_refresh:
     default: ""
     type: string
-    description: |
+    description: >
       How often snapd handles updates for installed snaps. The default
       (an empty string) is 4x per day. Set to "max" to check once per month
       based on the charm deployment date. You may also set a custom string as
