@@ -289,7 +289,8 @@ def _refresh_store(snapname, **kw):
     if not data_changed('snap.opts.{}'.format(snapname), kw):
         return
 
-    cmd = ['snap', 'refresh']
+    # --amend allows us to refresh from a local resource
+    cmd = ['snap', 'refresh', '--amend']
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Refreshing {} from store'.format(snapname))
