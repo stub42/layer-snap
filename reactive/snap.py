@@ -31,7 +31,7 @@ from charmhelpers.core.host import write_file
 from charms import layer
 from charms import reactive
 from charms.layer import snap
-from charms.reactive import when
+from charms.reactive import register_trigger, when, when_not
 from charms.reactive.helpers import data_changed
 
 
@@ -264,12 +264,18 @@ def configure_snap_enterprise_proxy():
             'Proxy ID from header did not match store assertion: ' + e.output)
 
 
-@when('config.changed.snapd_refresh')
+register_trigger(when='config.changed.snapd_refresh',
+                 clear_flag='snap.refresh.set')
+
+
+@when_not('snap.refresh.set')
+@when('snap.installed.core')
 def change_snapd_refresh():
     """Set the system refresh.timer option"""
     ensure_snapd_min_version('2.31')
     timer = hookenv.config()['snapd_refresh']
     snap.set_refresh_timer(timer)
+    reactive.set_flag('snap.refresh.set')
 
 
 # Per https://github.com/juju-solutions/charms.reactive/issues/33,
