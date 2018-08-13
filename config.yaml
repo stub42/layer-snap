@@ -23,7 +23,7 @@ options:
     default: ""
     type: string
     description: >
-      The address of a Snappy Enterprise Proxy to use for snaps
+      The address of a Snap Store Proxy to use for snaps
       e.g. http://snap-proxy.example.com
   snapd_refresh:
     default: ""

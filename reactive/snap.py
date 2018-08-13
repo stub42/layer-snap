@@ -234,13 +234,13 @@ def download_assertion_bundle(proxy_url):
     return local_bundle, store_id
 
 
-def configure_snap_enterprise_proxy():
+def configure_snap_store_proxy():
     if not reactive.is_flag_set('config.changed.snap_proxy_url'):
         return
     ensure_snapd_min_version('2.30')
-    enterprise_proxy_url = hookenv.config()['snap_proxy_url']
-    if enterprise_proxy_url:
-        bundle, store_id = download_assertion_bundle(enterprise_proxy_url)
+    snap_store_proxy_url = hookenv.config()['snap_proxy_url']
+    if snap_store_proxy_url:
+        bundle, store_id = download_assertion_bundle(snap_store_proxy_url)
         try:
             subprocess.check_output(
                 ['snap', 'ack', bundle],
@@ -293,6 +293,6 @@ if not hasattr(reactive, '_snap_registered'):
     hookenv.atstart(ensure_snapd)
     hookenv.atstart(ensure_path)
     hookenv.atstart(update_snap_proxy)
-    hookenv.atstart(configure_snap_enterprise_proxy)
+    hookenv.atstart(configure_snap_store_proxy)
     hookenv.atstart(install)
     reactive._snap_registered = True
