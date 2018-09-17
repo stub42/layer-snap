@@ -239,8 +239,7 @@ def get(snapname, key):
 def _snap_args(channel='stable', devmode=False, jailmode=False,
                dangerous=False, force_dangerous=False, connect=None,
                classic=False, revision=None):
-    if channel != 'stable':
-        yield '--channel={}'.format(channel)
+    yield '--channel={}'.format(channel)
     if devmode is True:
         yield '--devmode'
     if jailmode is True:
