@@ -25,11 +25,11 @@ from time import sleep
 from datetime import datetime, timedelta
 
 
-def get_installed_state_name(snapname):
+def get_installed_flag(snapname):
     return 'snap.installed.{}'.format(snapname)
 
 
-def get_disabled_state_name(snapname):
+def get_disabled_flag(snapname):
     return 'snap.disabled.{}'.format(snapname)
 
 
@@ -44,7 +44,7 @@ def install(snapname, **kw):
     If the snap.installed.{snapname} state is already set then the refresh()
     function is called.
     '''
-    installed_state = get_installed_state_name(snapname)
+    installed_state = get_installed_flag(snapname)
     if reactive.is_state(installed_state):
         refresh(snapname, **kw)
     else:
@@ -60,13 +60,13 @@ def install(snapname, **kw):
 
     # Installing any snap will first ensure that 'core' is installed. Set an
     # appropriate flag for consumers that want to get/set core options.
-    core_installed = get_installed_state_name('core')
+    core_installed = get_installed_flag('core')
     if not reactive.is_state(core_installed):
         reactive.set_state(core_installed)
 
 
 def is_installed(snapname):
-    return reactive.is_state(get_installed_state_name(snapname))
+    return reactive.is_state(get_installed_flag(snapname))
 
 
 def refresh(snapname, **kw):
@@ -98,7 +98,7 @@ def remove(snapname):
     hookenv.log('Removing snap {}'.format(snapname))
     subprocess.check_call(['snap', 'remove', snapname],
                           universal_newlines=True)
-    reactive.remove_state(get_installed_state_name(snapname))
+    reactive.remove_state(get_installed_flag(snapname))
 
 
 def connect(plug, slot):
@@ -133,7 +133,7 @@ def disable(snapname):
     exist
     '''
     hookenv.log('Disabling {} snap'.format(snapname))
-    if not reactive.is_flag_set(get_installed_state_name(snapname)):
+    if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
             'Cannot disable {} snap because it is not installed'.format(
                 snapname), hookenv.WARNING)
@@ -141,7 +141,7 @@ def disable(snapname):
 
     subprocess.check_call(['snap', 'disable', snapname],
                           universal_newlines=True)
-    reactive.set_flag(get_disabled_state_name(snapname))
+    reactive.set_flag(get_disabled_flag(snapname))
 
 
 def enable(snapname):
@@ -153,7 +153,7 @@ def enable(snapname):
     exist
     '''
     hookenv.log('Enabling {} snap'.format(snapname))
-    if not reactive.is_flag_set(get_installed_state_name(snapname)):
+    if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
             'Cannot enable {} snap because it is not installed'.format(
                 snapname), hookenv.WARNING)
@@ -161,7 +161,7 @@ def enable(snapname):
 
     subprocess.check_call(['snap', 'enable', snapname],
                           universal_newlines=True)
-    reactive.clear_flag(get_disabled_state_name(snapname))
+    reactive.clear_flag(get_disabled_flag(snapname))
 
 
 def restart(snapname):
@@ -171,7 +171,7 @@ def restart(snapname):
     exist
     '''
     hookenv.log('Restarting {} snap'.format(snapname))
-    if not reactive.is_flag_set(get_installed_state_name(snapname)):
+    if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
             'Cannot restart {} snap because it is not installed'.format(
                 snapname), hookenv.WARNING)
@@ -187,7 +187,7 @@ def set(snapname, key, value):
     This method will fail if snapname is not an installed snap
     '''
     hookenv.log('Set config {}={} for snap {}'.format(key, value, snapname))
-    if not reactive.is_flag_set(get_installed_state_name(snapname)):
+    if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
             'Cannot set {} snap config because it is not installed'.format(
                 snapname), hookenv.WARNING)
@@ -239,7 +239,7 @@ def get(snapname, key):
     This method will fail if snapname is not an installed snap
     '''
     hookenv.log('Get config {} for snap {}'.format(key, snapname))
-    if not reactive.is_flag_set(get_installed_state_name(snapname)):
+    if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
             'Cannot get {} snap config because it is not installed'.format(
                 snapname), hookenv.WARNING)
