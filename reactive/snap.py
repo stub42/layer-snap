@@ -278,21 +278,11 @@ def change_snapd_refresh():
     reactive.set_flag('snap.refresh.set')
 
 
-# Per https://github.com/juju-solutions/charms.reactive/issues/33,
-# this module may be imported multiple times so ensure the
-# initialization hook is only registered once. I have to piggy back
-# onto the namespace of a module imported before reactive discovery
-# to do this.
-if not hasattr(reactive, '_snap_registered'):
-    # We need to register this to run every hook, not just during install
-    # and config-changed, to protect against race conditions. If we don't
-    # do this, then the config in the hook environment may show updates
-    # to running hooks well before the config-changed hook has been invoked
-    # and the intialization provided an opertunity to be run.
-    hookenv.atstart(hookenv.log, 'Initializing Snap Layer')
-    hookenv.atstart(ensure_snapd)
-    hookenv.atstart(ensure_path)
-    hookenv.atstart(update_snap_proxy)
-    hookenv.atstart(configure_snap_store_proxy)
-    hookenv.atstart(install)
-    reactive._snap_registered = True
+# Bootstrap. We don't use standard reactive handlers to ensure that
+# everything is bootstrapped before any charm handlers are run.
+hookenv.atstart(hookenv.log, 'Initializing Snap Layer')
+hookenv.atstart(ensure_snapd)
+hookenv.atstart(ensure_path)
+hookenv.atstart(update_snap_proxy)
+hookenv.atstart(configure_snap_store_proxy)
+hookenv.atstart(install)
