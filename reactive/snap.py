@@ -66,8 +66,8 @@ def install():
             hookenv.log('Snap {} not supported on {!r} architecture'
                         ''.format(snapname, arch), ERROR)
             continue
-        installed_state = 'snap.installed.{}'.format(snapname)
-        if not reactive.is_state(installed_state):
+        installed_flag = 'snap.installed.{}'.format(snapname)
+        if not reactive.is_flag_set(installed_flag):
             snap.install(snapname, **snap_opts)
     if data_changed('snap.install.opts', opts):
         snap.connect_all()

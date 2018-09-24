@@ -39,13 +39,13 @@ def install(snapname, **kw):
     Snap will be installed from the coresponding resource if available,
     otherwise from the Snap Store.
 
-    Sets the snap.installed.{snapname} state.
+    Sets the snap.installed.{snapname} flag.
 
-    If the snap.installed.{snapname} state is already set then the refresh()
+    If the snap.installed.{snapname} flag is already set then the refresh()
     function is called.
     '''
-    installed_state = get_installed_flag(snapname)
-    if reactive.is_state(installed_state):
+    installed_flag = get_installed_flag(snapname)
+    if reactive.is_flag_set(installed_flag):
         refresh(snapname, **kw)
     else:
         if hookenv.has_juju_version('2.0'):
@@ -56,17 +56,17 @@ def install(snapname, **kw):
                 _install_local(res_path, **kw)
         else:
             _install_store(snapname, **kw)
-        reactive.set_state(installed_state)
+        reactive.set_flag(installed_flag)
 
     # Installing any snap will first ensure that 'core' is installed. Set an
     # appropriate flag for consumers that want to get/set core options.
     core_installed = get_installed_flag('core')
-    if not reactive.is_state(core_installed):
-        reactive.set_state(core_installed)
+    if not reactive.is_flag_set(core_installed):
+        reactive.set_flag(core_installed)
 
 
 def is_installed(snapname):
-    return reactive.is_state(get_installed_flag(snapname))
+    return reactive.is_flag_set(get_installed_flag(snapname))
 
 
 def refresh(snapname, **kw):
@@ -98,7 +98,7 @@ def remove(snapname):
     hookenv.log('Removing snap {}'.format(snapname))
     subprocess.check_call(['snap', 'remove', snapname],
                           universal_newlines=True)
-    reactive.remove_state(get_installed_flag(snapname))
+    reactive.clear_flag(get_installed_flag(snapname))
 
 
 def connect(plug, slot):
@@ -129,7 +129,7 @@ def disable(snapname):
 
     Sets the snap.disabled.{snapname} flag
 
-    This method doesn't affect any snap state if requested snap does not
+    This method doesn't affect any snap flag if requested snap does not
     exist
     '''
     hookenv.log('Disabling {} snap'.format(snapname))
@@ -149,7 +149,7 @@ def enable(snapname):
 
     Clears the snap.disabled.{snapname} flag
 
-    This method doesn't affect any snap state if requeted snap does not
+    This method doesn't affect any snap flag if requeted snap does not
     exist
     '''
     hookenv.log('Enabling {} snap'.format(snapname))
@@ -167,7 +167,7 @@ def enable(snapname):
 def restart(snapname):
     '''Restarts a snap in the system
 
-    This method doesn't affect any snap state if requested snap does not
+    This method doesn't affect any snap flag if requested snap does not
     exist
     '''
     hookenv.log('Restarting {} snap'.format(snapname))
