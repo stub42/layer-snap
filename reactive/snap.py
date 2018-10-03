@@ -112,6 +112,7 @@ def ensure_snapd():
     # I don't use the apt layer, because that would tie this layer
     # too closely to apt packaging. Perhaps this is a snap-only system.
     if not shutil.which('snap'):
+        os.environ['DEBIAN_FRONTEND'] = 'noninteractive'
         cmd = ['apt-get', 'install', '-y', 'snapd']
         # LP:1699986: Force install of systemd on Trusty.
         if get_series() == 'trusty':
@@ -122,6 +123,7 @@ def ensure_snapd():
     # on the necessary package and snaps work in lxd xenial containers
     # without the workaround.
     if host.is_container() and not shutil.which('squashfuse'):
+        os.environ['DEBIAN_FRONTEND'] = 'noninteractive'
         cmd = ['apt-get', 'install', '-y', 'squashfuse', 'fuse']
         subprocess.check_call(cmd, universal_newlines=True)
 
