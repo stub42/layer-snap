@@ -149,9 +149,15 @@ def update_snap_proxy():
     # updates.
     proxy = proxy_settings()
 
-    path = '/etc/systemd/system/snapd.service.d/snap_layer_proxy.conf'
+    override_dir = '/etc/systemd/system/snapd.service.d'
+    path = os.path.join(override_dir, 'snap_layer_proxy.conf')
     if not proxy and not os.path.exists(path):
         return  # No proxy asked for and proxy never configured.
+
+    # It seems we cannot rely on this directory existing, so manually
+    # create it.
+    if not os.path.exists(override_dir):
+        host.mkdir(override_dir, perms=0o755)
 
     if not data_changed('snap.proxy', proxy):
         return  # Short circuit avoids unnecessary restarts.
