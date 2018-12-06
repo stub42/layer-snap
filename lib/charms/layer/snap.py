@@ -247,6 +247,32 @@ def get(snapname, key):
 
     return subprocess.check_output(['snap', 'get', snapname, key])
 
+def get_installed_version(snapname):
+    '''Gets the installed version of a snapname.
+       This function will fail if snapname is not an installed snap.
+    '''
+    cmd = ['snap', 'info', snapname]
+    hookenv.log('Get installed key for snap {}'.format(snapname))
+    if not reactive.is_flag_set(get_installed_flag(snapname)):
+        hookenv.log(
+            'Cannot get {} snap installed version because it is not installed'.format(
+                snapname), hookenv.WARNING)
+        return
+    return subprocess.check_output(cmd, encoding='utf-8').partition('installed:')[-1].split()[0]
+
+
+def get_installed_channel(snapname):
+    '''Gets the tracking (channel) of a snapname.
+       This function will fail if snapname is not an installed snap.
+    '''
+    cmd = ['snap', 'info', snapname]
+    hookenv.log('Get channel for snap {}'.format(snapname))
+    if not reactive.is_flag_set(get_installed_flag(snapname)):
+        hookenv.log(
+            'Cannot get snap tracking (channel) because it is not installed'.format(
+                snapname), hookenv.WARNING)
+        return
+    return subprocess.check_output(cmd, encoding='utf-8').partition('tracking:')[-1].split()[0]
 
 def _snap_args(channel='stable', devmode=False, jailmode=False,
                dangerous=False, force_dangerous=False, connect=None,
