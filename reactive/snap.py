@@ -282,7 +282,10 @@ def change_snapd_refresh():
     """Set the system refresh.timer option"""
     ensure_snapd_min_version('2.31')
     timer = hookenv.config()['snapd_refresh']
-    snap.set_refresh_timer(timer)
+    was_set = reactive.is_flag_set('snap.refresh.was-set')
+    if timer or was_set:
+        snap.set_refresh_timer(timer)
+    reactive.toggle_flag('snap.refresh.was-set', timer)
     reactive.set_flag('snap.refresh.set')
 
 
