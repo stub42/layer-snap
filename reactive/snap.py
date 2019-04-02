@@ -53,7 +53,7 @@ class InvalidBundleError(Exception):
 
 def install():
     # Do nothing if we don't have kernel support yet
-    if not kernel_supported:
+    if not kernel_supported():
         return
 
     opts = layer.options('snap')
@@ -79,7 +79,7 @@ def install():
 
 def refresh():
     # Do nothing if we don't have kernel support yet
-    if not kernel_supported:
+    if not kernel_supported():
         return
 
     opts = layer.options('snap')
@@ -160,7 +160,7 @@ def proxy_settings():
 
 def update_snap_proxy():
     # Do nothing if we don't have kernel support yet
-    if not kernel_supported:
+    if not kernel_supported():
         return
 
     # This is a hack based on
@@ -266,7 +266,7 @@ def download_assertion_bundle(proxy_url):
 
 def configure_snap_store_proxy():
     # Do nothing if we don't have kernel support yet
-    if not kernel_supported:
+    if not kernel_supported():
         return
 
     if not reactive.is_flag_set('config.changed.snap_proxy_url'):
