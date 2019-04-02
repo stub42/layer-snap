@@ -52,6 +52,10 @@ class InvalidBundleError(Exception):
 
 
 def install():
+    # Do nothing if we don't have kernel support yet
+    if not kernel_supported:
+        return
+
     opts = layer.options('snap')
     # supported-architectures is EXPERIMENTAL and undocumented.
     # It probably should live in the base layer, blocking the charm
@@ -74,6 +78,10 @@ def install():
 
 
 def refresh():
+    # Do nothing if we don't have kernel support yet
+    if not kernel_supported:
+        return
+
     opts = layer.options('snap')
     # supported-architectures is EXPERIMENTAL and undocumented.
     # It probably should live in the base layer, blocking the charm
@@ -102,6 +110,16 @@ def snapd_supported():
     if get_series() == 'trusty' and host.is_container():
         return False
     return True  # For all other cases, assume true.
+
+
+def kernel_supported():
+    kernel_version = uname()[3]
+    if LooseVersion(kernel_version) < LooseVersion(4.4):
+        hookenv.log('Snaps do not work on kernel {}, a reboot '
+                    'into a supported kernel (>4.4) is required'
+                    ''.format(kernel_version))
+        return False
+    return True
 
 
 def ensure_snapd():
@@ -141,6 +159,10 @@ def proxy_settings():
 
 
 def update_snap_proxy():
+    # Do nothing if we don't have kernel support yet
+    if not kernel_supported:
+        return
+
     # This is a hack based on
     # https://bugs.launchpad.net/layer-snap/+bug/1533899/comments/1
     # Do it properly when Bug #1533899 is addressed.
@@ -243,6 +265,10 @@ def download_assertion_bundle(proxy_url):
 
 
 def configure_snap_store_proxy():
+    # Do nothing if we don't have kernel support yet
+    if not kernel_supported:
+        return
+
     if not reactive.is_flag_set('config.changed.snap_proxy_url'):
         return
     ensure_snapd_min_version('2.30')
