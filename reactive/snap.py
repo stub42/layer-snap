@@ -60,7 +60,7 @@ def install():
     # supported-architectures is EXPERIMENTAL and undocumented.
     # It probably should live in the base layer, blocking the charm
     # during bootstrap if the arch is unsupported.
-    arch = uname()[4]
+    arch = uname().machine
     for snapname, snap_opts in opts.items():
         supported_archs = snap_opts.pop('supported-architectures', None)
         if supported_archs and arch not in supported_archs:
@@ -113,8 +113,9 @@ def snapd_supported():
 
 
 def kernel_supported():
-    kernel_version = uname()[3]
-    if LooseVersion(kernel_version) < LooseVersion(4.4):
+    kernel_version = uname().release
+
+    if LooseVersion(kernel_version) < LooseVersion("4.4"):
         hookenv.log('Snaps do not work on kernel {}, a reboot '
                     'into a supported kernel (>4.4) is required'
                     ''.format(kernel_version))
