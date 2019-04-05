@@ -16,6 +16,7 @@
 options:
   snap_proxy:
     description: >
+      DEPRECATED. Use snap-http-proxy and snap-https-proxy model configuration settings.
       HTTP/HTTPS web proxy for Snappy to use when accessing the snap store.
     type: string
     default: ""
@@ -23,8 +24,8 @@ options:
     default: ""
     type: string
     description: >
-      The address of a Snap Store Proxy to use for snaps
-      e.g. http://snap-proxy.example.com
+      DEPRECATED. Use snap-store-proxy model configuration setting.
+      The address of a Snap Store Proxy to use for snaps e.g. http://snap-proxy.example.com
   snapd_refresh:
     default: ""
     type: string
