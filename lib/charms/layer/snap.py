@@ -235,8 +235,8 @@ def set_refresh_timer(timer=''):
 def get(snapname, key):
     '''Gets configuration options for a snap
 
-    This method returns the output that snapctl get command prints out.
-    This method will fail if snapname is not an installed snap
+    This method returns the stripped output from the snap get command.
+    This method will fail if snapname is not an installed snap.
     '''
     hookenv.log('Get config {} for snap {}'.format(key, snapname))
     if not reactive.is_flag_set(get_installed_flag(snapname)):
@@ -245,7 +245,7 @@ def get(snapname, key):
                 snapname), hookenv.WARNING)
         return
 
-    return subprocess.check_output(['snap', 'get', snapname, key])
+    return subprocess.check_output(['snap', 'get', snapname, key]).strip()
 
 def get_installed_version(snapname):
     '''Gets the installed version of a snapname.
