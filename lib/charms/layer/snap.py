@@ -1,4 +1,4 @@
-# Copyright 2016-2017 Canonical Ltd.
+# Copyright 2016-2019 Canonical Ltd.
 #
 # This file is part of the Snap layer for Juju.
 #
