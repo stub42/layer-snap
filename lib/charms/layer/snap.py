@@ -21,7 +21,6 @@ from charmhelpers.core import hookenv
 from charms import layer
 from charms import reactive
 from charms.reactive.helpers import any_file_changed, data_changed
-from time import sleep
 from datetime import datetime, timedelta
 
 
@@ -96,8 +95,7 @@ def refresh(snapname, **kw):
 
 def remove(snapname):
     hookenv.log('Removing snap {}'.format(snapname))
-    subprocess.check_call(['snap', 'remove', snapname],
-                          universal_newlines=True)
+    subprocess.check_call(['snap', 'remove', snapname])
     reactive.clear_flag(get_installed_flag(snapname))
 
 
@@ -108,8 +106,7 @@ def connect(plug, slot):
     the two arguments to the 'snap connect' command.
     '''
     hookenv.log('Connecting {} to {}'.format(plug, slot), hookenv.DEBUG)
-    subprocess.check_call(['snap', 'connect', plug, slot],
-                          universal_newlines=True)
+    subprocess.check_call(['snap', 'connect', plug, slot])
 
 
 def connect_all():
@@ -139,8 +136,7 @@ def disable(snapname):
                 snapname), hookenv.WARNING)
         return
 
-    subprocess.check_call(['snap', 'disable', snapname],
-                          universal_newlines=True)
+    subprocess.check_call(['snap', 'disable', snapname])
     reactive.set_flag(get_disabled_flag(snapname))
 
 
@@ -159,8 +155,7 @@ def enable(snapname):
                 snapname), hookenv.WARNING)
         return
 
-    subprocess.check_call(['snap', 'enable', snapname],
-                          universal_newlines=True)
+    subprocess.check_call(['snap', 'enable', snapname])
     reactive.clear_flag(get_disabled_flag(snapname))
 
 
@@ -177,8 +172,7 @@ def restart(snapname):
                 snapname), hookenv.WARNING)
         return
 
-    subprocess.check_call(['snap', 'restart', snapname],
-                          universal_newlines=True)
+    subprocess.check_call(['snap', 'restart', snapname])
 
 
 def set(snapname, key, value):
@@ -298,7 +292,7 @@ def _install_local(path, **kw):
         cmd.append('--dangerous')
         cmd.append(path)
         hookenv.log('Installing {} from local resource'.format(path))
-        subprocess.check_call(cmd, universal_newlines=True)
+        subprocess.check_call(cmd)
 
 
 def _install_store(snapname, **kw):
@@ -306,26 +300,8 @@ def _install_store(snapname, **kw):
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Installing {} from store'.format(snapname))
-    # Attempting the snap install 3 times to resolve unexpected EOF.
-    # This is a work around to lp:1677557. Stop doing this once it
-    # is resolved everywhere.
-    for attempt in range(3):
-        try:
-            out = subprocess.check_output(cmd, universal_newlines=True,
-                                          stderr=subprocess.STDOUT)
-            print(out)
-            break
-        except subprocess.CalledProcessError as x:
-            print(x.output)
-            # Per https://bugs.launchpad.net/bugs/1622782, we don't
-            # get a useful error code out of 'snap install', much like
-            # 'snap refresh' below. Remove this when we can rely on
-            # snap installs everywhere returning 0 for 'already insatlled'
-            if "already installed" in x.output:
-                break
-            if attempt == 2:
-                raise
-            sleep(5)
+    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    print(out)
 
 
 def _refresh_store(snapname, **kw):
@@ -337,18 +313,8 @@ def _refresh_store(snapname, **kw):
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Refreshing {} from store'.format(snapname))
-    # Per https://bugs.launchpad.net/layer-snap/+bug/1588322 we don't get
-    # a useful error code out of 'snap refresh'. We are forced to parse
-    # the output to see if it is a non-fatal error.
-    # subprocess.check_call(cmd, universal_newlines=True)
-    try:
-        out = subprocess.check_output(cmd, universal_newlines=True,
-                                      stderr=subprocess.STDOUT)
-        print(out)
-    except subprocess.CalledProcessError as x:
-        print(x.output)
-        if "has no updates available" not in x.output:
-            raise
+    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    print(out)
 
 
 def _resource_get(snapname):
