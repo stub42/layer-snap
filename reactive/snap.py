@@ -16,6 +16,7 @@
 '''
 charms.reactive helpers for dealing with Snap packages.
 '''
+from collections import OrderedDict
 from distutils.version import LooseVersion
 import os.path
 from os import uname
@@ -51,12 +52,19 @@ class InvalidBundleError(Exception):
     pass
 
 
+def sorted_snap_opts():
+    opts = layer.options('snap')
+    opts = sorted(opts.items(), key=lambda item: item[0] != 'core')
+    opts = OrderedDict(opts)
+    return opts
+
+
 def install():
     # Do nothing if we don't have kernel support yet
     if not kernel_supported():
         return
 
-    opts = layer.options('snap')
+    opts = sorted_snap_opts()
     # supported-architectures is EXPERIMENTAL and undocumented.
     # It probably should live in the base layer, blocking the charm
     # during bootstrap if the arch is unsupported.
@@ -82,7 +90,7 @@ def refresh():
     if not kernel_supported():
         return
 
-    opts = layer.options('snap')
+    opts = sorted_snap_opts()
     # supported-architectures is EXPERIMENTAL and undocumented.
     # It probably should live in the base layer, blocking the charm
     # during bootstrap if the arch is unsupported.
