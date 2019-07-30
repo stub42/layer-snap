@@ -300,7 +300,11 @@ def _install_store(snapname, **kw):
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Installing {} from store'.format(snapname))
-    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise
     print(out)
 
 
@@ -313,7 +317,11 @@ def _refresh_store(snapname, **kw):
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Refreshing {} from store'.format(snapname))
-    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise
     print(out)
 
 
