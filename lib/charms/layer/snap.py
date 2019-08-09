@@ -300,12 +300,27 @@ def _install_local(path, **kw):
 
 
 def _install_store(snapname, **kw):
+    """Install snap from store
+
+    :param snapname: Name of snap to install
+    :type snapname: str
+    :param kw: Keyword arguments to pass on to ``snap install``
+    :type kw: Dict[str, str]
+    :raises: subprocess.CalledProcessError
+    """
     cmd = ['snap', 'install']
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Installing {} from store'.format(snapname))
-    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-    print(out)
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                      universal_newlines=True)
+        print(out)
+    except subprocess.CalledProcessError as cp:
+        hookenv.log('Installation failed cmd="{}" returncode={} output="{}"'
+                    .format(cmd, cp.returncode, cp.output),
+                    level=hookenv.ERROR)
+        raise
 
 
 def _refresh_store(snapname, **kw):
