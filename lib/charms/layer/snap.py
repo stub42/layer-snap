@@ -315,7 +315,9 @@ def _install_store(snapname, **kw):
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                       universal_newlines=True)
-        print(out)
+        hookenv.log('Installation successful cmd="{}" output="{}"'
+                    .format(cmd, out),
+                    level=hookenv.DEBUG)
     except subprocess.CalledProcessError as cp:
         hookenv.log('Installation failed cmd="{}" returncode={} output="{}"'
                     .format(cmd, cp.returncode, cp.output),
