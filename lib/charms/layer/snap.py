@@ -241,6 +241,7 @@ def get(snapname, key):
 
     return subprocess.check_output(['snap', 'get', snapname, key]).strip()
 
+
 def get_installed_version(snapname):
     '''Gets the installed version of a snapname.
        This function will fail if snapname is not an installed snap.
@@ -249,10 +250,11 @@ def get_installed_version(snapname):
     hookenv.log('Get installed key for snap {}'.format(snapname))
     if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
-            'Cannot get {} snap installed version because it is not installed'.format(
-                snapname), hookenv.WARNING)
+            'Cannot get {} snap installed version because it is not installed'
+            .format(snapname), hookenv.WARNING)
         return
-    return subprocess.check_output(cmd, encoding='utf-8').partition('installed:')[-1].split()[0]
+    return subprocess.check_output(cmd, encoding='utf-8').partition(
+        'installed:')[-1].split()[0]
 
 
 def get_installed_channel(snapname):
@@ -263,10 +265,12 @@ def get_installed_channel(snapname):
     hookenv.log('Get channel for snap {}'.format(snapname))
     if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
-            'Cannot get snap tracking (channel) because it is not installed'.format(
-                snapname), hookenv.WARNING)
+            'Cannot get snap tracking (channel) because it is not installed'
+            .format(snapname), hookenv.WARNING)
         return
-    return subprocess.check_output(cmd, encoding='utf-8').partition('tracking:')[-1].split()[0]
+    return subprocess.check_output(cmd, encoding='utf-8').partition(
+        'tracking:')[-1].split()[0]
+
 
 def _snap_args(channel='stable', devmode=False, jailmode=False,
                dangerous=False, force_dangerous=False, connect=None,
@@ -296,12 +300,29 @@ def _install_local(path, **kw):
 
 
 def _install_store(snapname, **kw):
+    """Install snap from store
+
+    :param snapname: Name of snap to install
+    :type snapname: str
+    :param kw: Keyword arguments to pass on to ``snap install``
+    :type kw: Dict[str, str]
+    :raises: subprocess.CalledProcessError
+    """
     cmd = ['snap', 'install']
     cmd.extend(_snap_args(**kw))
     cmd.append(snapname)
     hookenv.log('Installing {} from store'.format(snapname))
-    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-    print(out)
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                      universal_newlines=True)
+        hookenv.log('Installation successful cmd="{}" output="{}"'
+                    .format(cmd, out),
+                    level=hookenv.DEBUG)
+    except subprocess.CalledProcessError as cp:
+        hookenv.log('Installation failed cmd="{}" returncode={} output="{}"'
+                    .format(cmd, cp.returncode, cp.output),
+                    level=hookenv.ERROR)
+        raise
 
 
 def _refresh_store(snapname, **kw):
