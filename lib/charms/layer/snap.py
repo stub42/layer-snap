@@ -313,8 +313,7 @@ def _install_store(snapname, **kw):
     cmd.append(snapname)
     hookenv.log('Installing {} from store'.format(snapname))
     try:
-        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                      universal_newlines=True)
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         hookenv.log('Installation successful cmd="{}" output="{}"'
                     .format(cmd, out),
                     level=hookenv.DEBUG)
