@@ -32,7 +32,7 @@ from charmhelpers.core.host import write_file
 from charms import layer
 from charms import reactive
 from charms.layer import snap
-from charms.reactive import register_trigger, when, when_not
+from charms.reactive import register_trigger, when, when_not, toggle_flag
 from charms.reactive.helpers import data_changed
 
 
@@ -83,6 +83,17 @@ def install():
             snap.install(snapname, **snap_opts)
     if data_changed('snap.install.opts', opts):
         snap.connect_all()
+
+
+def check_refresh_available():
+    # Do nothing if we don't have kernel support yet
+    if not kernel_supported():
+        return
+
+    available_refreshes = snap.get_available_refreshes()
+    for snapname in snap.get_installed_snaps():
+        toggle_flag(snap.get_refresh_available_flag(snapname),
+                    snapname in available_refreshes)
 
 
 def refresh():
@@ -332,3 +343,4 @@ hookenv.atstart(ensure_path)
 hookenv.atstart(update_snap_proxy)
 hookenv.atstart(configure_snap_store_proxy)
 hookenv.atstart(install)
+hookenv.atstart(check_refresh_available)

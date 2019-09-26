@@ -17,6 +17,8 @@
 import os
 import subprocess
 
+import yaml
+
 from charmhelpers.core import hookenv
 from charms import layer
 from charms import reactive
@@ -26,6 +28,14 @@ from datetime import datetime, timedelta
 
 def get_installed_flag(snapname):
     return 'snap.installed.{}'.format(snapname)
+
+
+def get_refresh_available_flag(snapname):
+    return 'snap.refresh-available.{}'.format(snapname)
+
+
+def get_local_flag(snapname):
+    return 'snap.local.{}'.format(snapname)
 
 
 def get_disabled_flag(snapname):
@@ -66,6 +76,19 @@ def install(snapname, **kw):
 
 def is_installed(snapname):
     return reactive.is_flag_set(get_installed_flag(snapname))
+
+
+def is_local(snapname):
+    return reactive.is_flag_set(get_local_flag(snapname))
+
+
+def get_installed_snaps():
+    '''Return a list of snaps which are installed by this layer.
+    '''
+    flag_prefix = 'snap.installed.'
+    return [flag[len(flag_prefix):]
+            for flag in reactive.get_flags()
+            if flag.startswith(flag_prefix)]
 
 
 def refresh(snapname, **kw):
@@ -347,3 +370,57 @@ def _resource_get(snapname):
     if res_path and os.stat(res_path).st_size != 0:
         return res_path
     return False
+
+
+def get_available_refreshes():
+    '''Return a list of snaps which have refreshes available.
+    '''
+    out = subprocess.check_output(['snap', 'refresh', '--list']).decode('utf8')
+    if out == 'All snaps up to date.':
+        return []
+    else:
+        return [l.split()[0] for l in out.splitlines()[1:]]
+
+
+def is_refresh_available(snapname):
+    '''Check whether a new revision is available for the given snap.
+    '''
+    return reactive.is_flag_set(get_refresh_available_flag(snapname))
+
+
+def _check_refresh_available(snapname):
+    return snapname in get_available_refreshes()
+
+
+def create_cohort_snapshop(snapname):
+    '''Create a new cohort key for the given snap.
+
+    Cohort keys represent a snapshot of the revision of a snap at the time
+    the key was created. These keys can then be used on any machine to lock
+    the revision of the snap until a new cohort is joined (or the key expires,
+    after 90 days). This is used to maintain consistency of the revision of
+    the snap across units or applications, and to manage the refresh of the
+    snap in a controlled manner.
+
+    Returns a cohort key.
+    '''
+    out = subprocess.check_output(['snap', 'create-cohort', snapname])
+    data = yaml.safe_load(out.decode('utf8'))
+    return data['cohorts'][snapname]['cohort-key']
+
+
+def join_cohort_snapshot(snapname, cohort_key):
+    '''Refresh the snap into the given cohort.
+
+    If the snap was previously in a cohort, this will update the revision
+    to that of the new cohort snapshot.
+    '''
+    if is_local(snapname):
+        # joining a cohort can override a locally installed snap
+        hookenv.log('Skipping joining cohort for local snap: '
+                    '{}'.format(snapname))
+        return
+    subprocess.check_output(['snap', 'refresh', snapname,
+                             '--cohort', cohort_key])
+    reactive.toggle_flag(get_refresh_available_flag(snapname),
+                         _check_refresh_available(snapname))
