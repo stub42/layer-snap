@@ -392,7 +392,7 @@ def _check_refresh_available(snapname):
     return snapname in get_available_refreshes()
 
 
-def create_cohort_snapshop(snapname):
+def create_cohort_snapshot(snapname):
     '''Create a new cohort key for the given snap.
 
     Cohort keys represent a snapshot of the revision of a snap at the time
@@ -413,7 +413,8 @@ def join_cohort_snapshot(snapname, cohort_key):
     '''Refresh the snap into the given cohort.
 
     If the snap was previously in a cohort, this will update the revision
-    to that of the new cohort snapshot.
+    to that of the new cohort snapshot. Note that this does not change the
+    channel that the snap is in, only the revision within that channel.
     '''
     if is_local(snapname):
         # joining a cohort can override a locally installed snap
@@ -422,5 +423,7 @@ def join_cohort_snapshot(snapname, cohort_key):
         return
     subprocess.check_output(['snap', 'refresh', snapname,
                              '--cohort', cohort_key])
+    # even though we just refreshed to the latest in the cohort, it's
+    # slightly possible that there's a newer rev available beyond the cohort
     reactive.toggle_flag(get_refresh_available_flag(snapname),
                          _check_refresh_available(snapname))
