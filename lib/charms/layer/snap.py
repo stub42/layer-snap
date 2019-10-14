@@ -253,7 +253,7 @@ def get_installed_version(snapname):
             'Cannot get {} snap installed version because it is not installed'
             .format(snapname), hookenv.WARNING)
         return
-    return subprocess.check_output(cmd, encoding='utf-8').partition(
+    return subprocess.check_output(cmd).decode('utf-8').partition(
         'installed:')[-1].split()[0]
 
 
@@ -268,7 +268,7 @@ def get_installed_channel(snapname):
             'Cannot get snap tracking (channel) because it is not installed'
             .format(snapname), hookenv.WARNING)
         return
-    return subprocess.check_output(cmd, encoding='utf-8').partition(
+    return subprocess.check_output(cmd).decode('utf-8').partition(
         'tracking:')[-1].split()[0]
 
 
