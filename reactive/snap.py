@@ -232,7 +232,7 @@ def _get_snapd_version():
         stdin=subprocess.DEVNULL,
         universal_newlines=True
     )
-    version_info = dict(line.split() for line in stdout.splitlines())
+    version_info = dict(line.split(None, 1) for line in stdout.splitlines())
     return LooseVersion(version_info['snapd'])
 
 
