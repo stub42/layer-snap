@@ -54,6 +54,7 @@ def install(snapname, **kw):
     function is called.
     '''
     installed_flag = get_installed_flag(snapname)
+    local_flag = get_local_flag(snapname)
     if reactive.is_flag_set(installed_flag):
         refresh(snapname, **kw)
     else:
@@ -63,6 +64,7 @@ def install(snapname, **kw):
                 _install_store(snapname, **kw)
             else:
                 _install_local(res_path, **kw)
+                reactive.set_flag(local_flag)
         else:
             _install_store(snapname, **kw)
         reactive.set_flag(installed_flag)
@@ -106,14 +108,18 @@ def refresh(snapname, **kw):
     # upload a zero byte resource, but then we would need to uninstall
     # the snap before reinstalling from the store and that has the
     # potential for data loss.
+    local_flag = get_local_flag(snapname)
     if hookenv.has_juju_version('2.0'):
         res_path = _resource_get(snapname)
         if res_path is False:
             _refresh_store(snapname, **kw)
+            reactive.clear_flag(local_flag)
         else:
             _install_local(res_path, **kw)
+            reactive.set_flag(local_flag)
     else:
         _refresh_store(snapname, **kw)
+        reactive.clear_flag(local_flag)
 
 
 def remove(snapname):
@@ -340,6 +346,7 @@ def _install_store(snapname, **kw):
         hookenv.log('Installation successful cmd="{}" output="{}"'
                     .format(cmd, out),
                     level=hookenv.DEBUG)
+        reactive.clear_flag(get_local_flag(snapname))
     except subprocess.CalledProcessError as cp:
         hookenv.log('Installation failed cmd="{}" returncode={} output="{}"'
                     .format(cmd, cp.returncode, cp.output),
