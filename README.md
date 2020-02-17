@@ -146,6 +146,20 @@ package::
   snap updated if the snap or arguments have changed. If the snap was
   installed from the Snap Store, `snap refresh` is run to update the snap.
 
+* `create_cohort_snapshot(snapname)`. Creates a new cohort snapshot and
+  returns the associated key. A cohort snapshot allows snaps on different
+  machines to coordinate their refreshes by sharing the cohort snapshot key.
+
+* `join_cohort_snapshot(snapname, cohort_key)`. Joins a cohort snapshot.
+  When in a cohort snapshot, new snap revisions will not be automatically
+  applied; instead, the leader should periodically check for an available
+  refresh, then create a new cohort snapshot and distribute the key in
+  a controlled fashion to roll out updates.
+
+* `is_refresh_available(snapname)`. Check whether the given snap can be
+  updated. Also available as an automatically managed flag, of the form
+  `snap.refresh-available.{snapname}`.
+
 * `remove(snapname)`. The snap is removed.
 
 Keyword arguments correspond to the layer.yaml options and snap command line
