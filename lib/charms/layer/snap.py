@@ -382,7 +382,13 @@ def _resource_get(snapname):
 def get_available_refreshes():
     '''Return a list of snaps which have refreshes available.
     '''
-    out = subprocess.check_output(['snap', 'refresh', '--list']).decode('utf8')
+    try:
+        out = subprocess.check_output(['snap', 'refresh', '--list']).decode('utf8')
+    except subprocess.CalledProcessError:
+        # If snap refresh fails for whatever reason, we should just return no
+        # refreshes available - LP:1869630.
+        return []
+
     if out == 'All snaps up to date.':
         return []
     else:
