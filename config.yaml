@@ -14,18 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 options:
-  snap_proxy:
-    description: >
-      DEPRECATED. Use snap-http-proxy and snap-https-proxy model configuration settings.
-      HTTP/HTTPS web proxy for Snappy to use when accessing the snap store.
-    type: string
-    default: ""
-  snap_proxy_url:
-    default: ""
-    type: string
-    description: >
-      DEPRECATED. Use snap-store-proxy model configuration setting.
-      The address of a Snap Store Proxy to use for snaps e.g. http://snap-proxy.example.com
+  # snap_proxy and snap_proxy_url have been deprecated for some time.
+  # If your charm still needs them, add these config items manually
+  # to your charm's config.yaml.
+  # snap_proxy:
+  #   description: >
+  #     DEPRECATED. Use snap-http-proxy and snap-https-proxy model configuration settings.
+  #     HTTP/HTTPS web proxy for Snappy to use when accessing the snap store.
+  #   type: string
+  #   default: ""
+  # snap_proxy_url:
+  #   default: ""
+  #   type: string
+  #   description: >
+  #     DEPRECATED. Use snap-store-proxy model configuration setting.
+  #     The address of a Snap Store Proxy to use for snaps e.g. http://snap-proxy.example.com
   snapd_refresh:
     default: ""
     type: string

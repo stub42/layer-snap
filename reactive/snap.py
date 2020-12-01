@@ -291,8 +291,19 @@ def configure_snap_store_proxy():
 
     if not reactive.is_flag_set('config.changed.snap_proxy_url'):
         return
+    config = hookenv.config()
+    if 'snap_proxy_url' not in config:
+        # The deprecated snap_proxy_url config items have been removed
+        # from config.yaml. If the charm author hasn't added them back
+        # explicitly, there is nothing to do. Juju is maintaining these
+        # settings as model configuration.
+        return
+    snap_store_proxy_url = config['snap_proxy_url']
+    if not snap_store_proxy_url and not config.previous('snap_proxy_url'):
+        # Proxy url is not set, and was not set previous hook. Do nothing,
+        # to avoid overwriting the Juju maintained setting.
+        return
     ensure_snapd_min_version('2.30')
-    snap_store_proxy_url = hookenv.config()['snap_proxy_url']
     if snap_store_proxy_url:
         bundle, store_id = download_assertion_bundle(snap_store_proxy_url)
         try:
