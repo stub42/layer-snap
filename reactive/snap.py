@@ -171,7 +171,7 @@ def proxy_settings():
     proxy_env = {key: value for key, value in os.environ.items()
                  if key in proxy_vars}
 
-    snap_proxy = hookenv.config()['snap_proxy']
+    snap_proxy = hookenv.config().get('snap_proxy')
     if snap_proxy:
         proxy_env['http_proxy'] = snap_proxy
         proxy_env['https_proxy'] = snap_proxy
@@ -298,7 +298,7 @@ def configure_snap_store_proxy():
         # explicitly, there is nothing to do. Juju is maintaining these
         # settings as model configuration.
         return
-    snap_store_proxy_url = config['snap_proxy_url']
+    snap_store_proxy_url = config.get('snap_proxy_url')
     if not snap_store_proxy_url and not config.previous('snap_proxy_url'):
         # Proxy url is not set, and was not set previous hook. Do nothing,
         # to avoid overwriting the Juju maintained setting.
