@@ -92,9 +92,7 @@ def check_refresh_available():
 
     available_refreshes = snap.get_available_refreshes()
     for snapname in snap.get_installed_snaps():
-        toggle_flag(
-            snap.get_refresh_available_flag(snapname), snapname in available_refreshes
-        )
+        toggle_flag(snap.get_refresh_available_flag(snapname), snapname in available_refreshes)
 
 
 def refresh():
@@ -121,9 +119,7 @@ def upgrade_charm():
 
 
 def get_series():
-    return subprocess.check_output(
-        ["lsb_release", "-sc"], universal_newlines=True
-    ).strip()
+    return subprocess.check_output(["lsb_release", "-sc"], universal_newlines=True).strip()
 
 
 def snapd_supported():
@@ -213,9 +209,7 @@ def update_snap_proxy():
         remove_snap_proxy_conf(path)
     subprocess.check_call(["systemctl", "daemon-reload"], universal_newlines=True)
     time.sleep(2)
-    subprocess.check_call(
-        ["systemctl", "restart", "snapd.service"], universal_newlines=True
-    )
+    subprocess.check_call(["systemctl", "restart", "snapd.service"], universal_newlines=True)
 
 
 def create_snap_proxy_conf(path, proxy):
@@ -243,9 +237,7 @@ def ensure_path():
 
 
 def _get_snapd_version():
-    stdout = subprocess.check_output(
-        ["snap", "version"], stdin=subprocess.DEVNULL, universal_newlines=True
-    )
+    stdout = subprocess.check_output(["snap", "version"], stdin=subprocess.DEVNULL, universal_newlines=True)
     version_info = dict(line.split(None, 1) for line in stdout.splitlines())
     return LooseVersion(version_info["snapd"])
 
@@ -267,7 +259,8 @@ def ensure_snapd_min_version(min_version):
         distro = get_series()
         # disable proposed by default, needs to explicit
         write_file(
-            "/etc/apt/preferences.d/proposed", PREFERENCES.format(distro),
+            "/etc/apt/preferences.d/proposed",
+            PREFERENCES.format(distro),
         )
         apt_update()
         # explicitly install snapd from proposed
@@ -315,9 +308,7 @@ def configure_snap_store_proxy():
                 universal_newlines=True,
             )
         except subprocess.CalledProcessError as e:
-            raise InvalidBundleError(
-                "snapd could not ack the proxy assertion: " + e.output
-            )
+            raise InvalidBundleError("snapd could not ack the proxy assertion: " + e.output)
     else:
         store_id = ""
 
@@ -328,9 +319,7 @@ def configure_snap_store_proxy():
             universal_newlines=True,
         )
     except subprocess.CalledProcessError as e:
-        raise InvalidBundleError(
-            "Proxy ID from header did not match store assertion: " + e.output
-        )
+        raise InvalidBundleError("Proxy ID from header did not match store assertion: " + e.output)
 
 
 register_trigger(when="config.changed.snapd_refresh", clear_flag="snap.refresh.set")

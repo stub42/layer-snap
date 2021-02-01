@@ -86,14 +86,9 @@ def is_local(snapname):
 
 
 def get_installed_snaps():
-    """Return a list of snaps which are installed by this layer.
-    """
+    """Return a list of snaps which are installed by this layer."""
     flag_prefix = "snap.installed."
-    return [
-        flag[len(flag_prefix) :]
-        for flag in reactive.get_flags()
-        if flag.startswith(flag_prefix)
-    ]
+    return [flag[len(flag_prefix) :] for flag in reactive.get_flags() if flag.startswith(flag_prefix)]
 
 
 def refresh(snapname, **kw):
@@ -280,29 +275,22 @@ def get(snapname, key):
 
 def get_installed_version(snapname):
     """Gets the installed version of a snapname.
-       This function will fail if snapname is not an installed snap.
+    This function will fail if snapname is not an installed snap.
     """
     cmd = ["snap", "info", snapname]
     hookenv.log("Get installed key for snap {}".format(snapname))
     if not reactive.is_flag_set(get_installed_flag(snapname)):
         hookenv.log(
-            "Cannot get {} snap installed version because it is not installed".format(
-                snapname
-            ),
+            "Cannot get {} snap installed version because it is not installed".format(snapname),
             hookenv.WARNING,
         )
         return
-    return (
-        subprocess.check_output(cmd)
-        .decode("utf-8", errors="replace")
-        .partition("installed:")[-1]
-        .split()[0]
-    )
+    return subprocess.check_output(cmd).decode("utf-8", errors="replace").partition("installed:")[-1].split()[0]
 
 
 def get_installed_channel(snapname):
     """Gets the tracking (channel) of a snapname.
-       This function will fail if snapname is not an installed snap.
+    This function will fail if snapname is not an installed snap.
     """
     cmd = ["snap", "info", snapname]
     hookenv.log("Get channel for snap {}".format(snapname))
@@ -312,12 +300,7 @@ def get_installed_channel(snapname):
             hookenv.WARNING,
         )
         return
-    return (
-        subprocess.check_output(cmd)
-        .decode("utf-8", errors="replace")
-        .partition("tracking:")[-1]
-        .split()[0]
-    )
+    return subprocess.check_output(cmd).decode("utf-8", errors="replace").partition("tracking:")[-1].split()[0]
 
 
 def _snap_args(
@@ -383,9 +366,7 @@ def _install_store(snapname, **kw):
                 reactive.clear_flag(get_local_flag(snapname))
             except subprocess.CalledProcessError as cp:
                 hookenv.log(
-                    'Installation failed cmd="{}" returncode={} output="{}"'.format(
-                        cmd, cp.returncode, cp.output
-                    ),
+                    'Installation failed cmd="{}" returncode={} output="{}"'.format(cmd, cp.returncode, cp.output),
                     level=hookenv.ERROR,
                 )
                 raise
@@ -417,8 +398,7 @@ def _resource_get(snapname):
 
 
 def get_available_refreshes():
-    """Return a list of snaps which have refreshes available.
-    """
+    """Return a list of snaps which have refreshes available."""
     try:
         out = subprocess.check_output(["snap", "refresh", "--list"]).decode("utf8")
     except subprocess.CalledProcessError:
@@ -433,8 +413,7 @@ def get_available_refreshes():
 
 
 def is_refresh_available(snapname):
-    """Check whether a new revision is available for the given snap.
-    """
+    """Check whether a new revision is available for the given snap."""
     return reactive.is_flag_set(get_refresh_available_flag(snapname))
 
 
@@ -473,6 +452,4 @@ def join_cohort_snapshot(snapname, cohort_key):
     subprocess.check_output(["snap", "refresh", snapname, "--cohort", cohort_key])
     # even though we just refreshed to the latest in the cohort, it's
     # slightly possible that there's a newer rev available beyond the cohort
-    reactive.toggle_flag(
-        get_refresh_available_flag(snapname), _check_refresh_available(snapname)
-    )
+    reactive.toggle_flag(get_refresh_available_flag(snapname), _check_refresh_available(snapname))
