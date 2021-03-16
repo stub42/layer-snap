@@ -105,6 +105,7 @@ def refresh():
     # It probably should live in the base layer, blocking the charm
     # during bootstrap if the arch is unsupported.
     arch = uname()[4]
+    check_refresh_available()
     for snapname, snap_opts in opts.items():
         supported_archs = snap_opts.pop("supported-architectures", None)
         if supported_archs and arch not in supported_archs:
@@ -346,4 +347,3 @@ hookenv.atstart(ensure_path)
 hookenv.atstart(update_snap_proxy)
 hookenv.atstart(configure_snap_store_proxy)
 hookenv.atstart(install)
-hookenv.atstart(check_refresh_available)
