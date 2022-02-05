@@ -158,14 +158,6 @@ def ensure_snapd():
             cmd.append("systemd")
         subprocess.check_call(cmd, universal_newlines=True)
 
-    # Work around lp:1628289. Remove this stanza once snapd depends
-    # on the necessary package and snaps work in lxd xenial containers
-    # without the workaround.
-    if host.is_container() and not shutil.which("squashfuse"):
-        os.environ["DEBIAN_FRONTEND"] = "noninteractive"
-        cmd = ["apt-get", "install", "-y", "squashfuse", "fuse"]
-        subprocess.check_call(cmd, universal_newlines=True)
-
 
 def proxy_settings():
     proxy_vars = ("http_proxy", "https_proxy")
